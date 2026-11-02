@@ -15,23 +15,23 @@ import { useStore } from '../lib/store';
 import type { AuditRecord } from '../types';
 
 export function AuditPacks({ route }: { route: Route }) {
-  const { audits, suppliers, evidence, lastAssessment, createAuditPack } = useStore();
+  const { audits, subcontractors, evidence, lastAssessment, createAuditPack } = useStore();
   const toast = useToast();
   const openId = route.params.get('record');
   const open = audits.find((a) => a.id === openId);
 
-  const supplierName = (id: string) => suppliers.find((s) => s.id === id)?.name ?? id;
+  const supplierName = (id: string) => subcontractors.find((s) => s.id === id)?.name ?? id;
   const pkgOf = (id: string) => PACKAGES.find((p) => p.id === id)!;
 
   const isReproducible = (r: AuditRecord) => {
-    const supplier = suppliers.find((s) => s.id === r.assessment.supplierId);
-    if (!supplier) return false;
-    const fresh = runAssessment({ supplier, pkg: pkgOf(r.assessment.packageId), mobilisation: r.assessment.mobilisation, finish: r.assessment.finish, evidence, ranAt: r.assessment.ranAt });
+    const subcontractor = subcontractors.find((s) => s.id === r.assessment.supplierId);
+    if (!subcontractor) return false;
+    const fresh = runAssessment({ subcontractor, pkg: pkgOf(r.assessment.packageId), mobilisation: r.assessment.mobilisation, finish: r.assessment.finish, evidence, ranAt: r.assessment.ranAt });
     return reproduces(r.assessment, fresh);
   };
 
   const download = (r: AuditRecord) => {
-    downloadAssessment(r.assessment, { recordId: r.id, generatedAt: r.generatedAt, reviewer: r.reviewer, note: r.note }, suppliers);
+    downloadAssessment(r.assessment, { recordId: r.id, generatedAt: r.generatedAt, reviewer: r.reviewer, note: r.note }, subcontractors);
     toast({ tone: 'success', title: `${r.id} downloaded`, description: 'Printable HTML report — open it and print to PDF if needed.' });
   };
 
@@ -39,9 +39,9 @@ export function AuditPacks({ route }: { route: Route }) {
     let source = lastAssessment;
     let note = 'Generated from the most recent readiness check.';
     if (!source) {
-      const supplier = suppliers.find((s) => s.id === 'S01')!;
+      const subcontractor = subcontractors.find((s) => s.id === 'S01')!;
       const pkg = pkgOf('P01');
-      source = runAssessment({ supplier, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, evidence, ranAt: nowStamp() });
+      source = runAssessment({ subcontractor, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, evidence, ranAt: nowStamp() });
       note = 'No readiness check had been run in this session; generated for Apex Electrical Services on Riverside Apartments.';
     }
     const record = createAuditPack({ ...source, ranAt: nowStamp() }, note);
@@ -73,7 +73,7 @@ export function AuditPacks({ route }: { route: Route }) {
                   <th className="th pl-5">Record</th>
                   <th className="th">Generated</th>
                   <th className="th">Package</th>
-                  <th className="th">Supplier</th>
+                  <th className="th">Subcontractor</th>
                   <th className="th">Verdict</th>
                   <th className="th">Reviewer</th>
                   <th className="th">Integrity</th>

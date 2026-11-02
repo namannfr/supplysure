@@ -22,17 +22,17 @@ function ExpiryText({ iso }: { iso: string | null }) {
 }
 
 export function SupplierDetails({ supplierId, highlightEvidence, onClose }: { supplierId: string | null; highlightEvidence?: string | null; onClose: () => void }) {
-  const { suppliers, evidence, derived } = useStore();
+  const { subcontractors, evidence, derived } = useStore();
   const toast = useToast();
-  const supplier = suppliers.find((s) => s.id === supplierId);
-  const stats = derived.supplierStats.find((s) => s.supplier.id === supplierId);
+  const subcontractor = subcontractors.find((s) => s.id === supplierId);
+  const stats = derived.supplierStats.find((s) => s.subcontractor.id === supplierId);
 
-  if (!supplier || !stats) return null;
+  if (!subcontractor || !stats) return null;
 
-  const passport = evaluatePassport(supplier, evidence, DEMO_TODAY);
+  const passport = evaluatePassport(subcontractor, evidence, DEMO_TODAY);
   const passportTypes = new Set(passport.set.requirementIds.map((id) => REQUIREMENTS_BY_ID[id].evidenceType));
-  const packageEvidence: EvidenceRecord[] = evidence.filter((e) => e.supplierId === supplier.id && !passportTypes.has(e.type));
-  const invited = supplier.status === 'invited';
+  const packageEvidence: EvidenceRecord[] = evidence.filter((e) => e.supplierId === subcontractor.id && !passportTypes.has(e.type));
+  const invited = subcontractor.status === 'invited';
 
   return (
     <Drawer
@@ -41,14 +41,14 @@ export function SupplierDetails({ supplierId, highlightEvidence, onClose }: { su
       title={
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-ink">{supplier.name}</h2>
+            <h2 className="text-lg font-semibold text-ink">{subcontractor.name}</h2>
             {invited ? <Badge tone="info">Invited</Badge> : <RiskBadge risk={stats.risk} />}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
-            <span>{TRADE_LABELS[supplier.trade]}</span>
-            <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{supplier.location}</span>
-            <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{supplier.contactName}</span>
-            <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{supplier.email}</span>
+            <span>{TRADE_LABELS[subcontractor.trade]}</span>
+            <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{subcontractor.location}</span>
+            <span className="inline-flex items-center gap-1"><UserRound className="h-3.5 w-3.5" />{subcontractor.contactName}</span>
+            <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{subcontractor.email}</span>
           </div>
         </div>
       }
@@ -79,11 +79,11 @@ export function SupplierDetails({ supplierId, highlightEvidence, onClose }: { su
         <>
           <Button
             icon={Send}
-            onClick={() => toast({ tone: 'info', title: 'Evidence request recorded (demo)', description: `No email was sent to ${supplier.contactName}. In the product this would notify the supplier.` })}
+            onClick={() => toast({ tone: 'info', title: 'Evidence request recorded (demo)', description: `No email was sent to ${subcontractor.contactName}. In the product this would notify the subcontractor.` })}
           >
             Request evidence update
           </Button>
-          <Button variant="primary" icon={ClipboardCheck} onClick={() => navigate(`/readiness?supplier=${supplier.id}${stats.livePackages[0] ? `&package=${stats.livePackages[0].id}` : ''}`)}>
+          <Button variant="primary" icon={ClipboardCheck} onClick={() => navigate(`/readiness?subcontractor=${subcontractor.id}${stats.livePackages[0] ? `&package=${stats.livePackages[0].id}` : ''}`)}>
             Run readiness check
           </Button>
         </>
@@ -156,16 +156,16 @@ export function SupplierDetails({ supplierId, highlightEvidence, onClose }: { su
         <h3 className="mb-2 text-[13px] font-semibold text-ink">Live packages</h3>
         {stats.livePackages.length === 0 ? (
           <p className="rounded-md border border-dashed border-line px-3.5 py-4 text-[13px] text-muted">
-            {invited ? 'Not appointed to a package yet. Assess readiness once the supplier completes its passport.' : 'Not currently appointed to a live package. The passport remains available for future packages.'}
+            {invited ? 'Not appointed to a package yet. Assess readiness once the subcontractor completes its passport.' : 'Not currently appointed to a live package. The passport remains available for future packages.'}
           </p>
         ) : (
           <ul className="divide-y divide-line-soft rounded-md border border-line">
             {stats.livePackages.map((p) => {
-              const a = derived.assessments.get(assignmentKey(p.id, supplier.id))!;
-              const scope = PACKAGES.find((x) => x.id === p.id)!.assignments.find((x) => x.supplierId === supplier.id)?.scopeOfWorks;
+              const a = derived.assessments.get(assignmentKey(p.id, subcontractor.id))!;
+              const scope = PACKAGES.find((x) => x.id === p.id)!.assignments.find((x) => x.supplierId === subcontractor.id)?.scopeOfWorks;
               return (
                 <li key={p.id}>
-                  <button type="button" onClick={() => navigate(`/readiness?supplier=${supplier.id}&package=${p.id}&run=1`)} className="flex w-full items-center gap-3 px-3.5 py-3 text-left hover:bg-canvas">
+                  <button type="button" onClick={() => navigate(`/readiness?subcontractor=${subcontractor.id}&package=${p.id}&run=1`)} className="flex w-full items-center gap-3 px-3.5 py-3 text-left hover:bg-canvas">
                     <div className="min-w-0 flex-1">
                       <div className="text-[13px] font-medium text-ink">{p.name}</div>
                       <div className="truncate text-xs text-muted">{scope}</div>

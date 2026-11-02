@@ -33,7 +33,7 @@ export function RequirementsTable({ assessment }: { assessment: Assessment | nul
         }
       />
       {!assessment ? (
-        <EmptyState icon={ScanSearch} title="No assessment yet" description="Choose a supplier and package, confirm the dates, then run the readiness check." />
+        <EmptyState icon={ScanSearch} title="No assessment yet" description="Choose a subcontractor and package, confirm the dates, then run the readiness check." />
       ) : visible.length === 0 ? (
         <EmptyState icon={ListFilter} title="No requirements in this view" description="Nothing matches this filter for the current assessment." />
       ) : (

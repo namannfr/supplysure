@@ -40,7 +40,7 @@ export function ReadinessChart({ stats }: { stats: PackageStats[] }) {
     <Card className="flex flex-col">
       <CardHeader
         title="Readiness across live packages"
-        subtitle={`${totals.total} supplier assignments, assessed for each package's dates`}
+        subtitle={`${totals.total} subcontractor assignments, assessed for each package's dates`}
         actions={
           <Select value={range} onChange={(e) => setRange(e.target.value as Range)} aria-label="Date range" className="w-[200px]">
             <option value="all">All live packages</option>
@@ -51,7 +51,7 @@ export function ReadinessChart({ stats }: { stats: PackageStats[] }) {
       />
       <div className="grid flex-1 gap-6 p-5 md:grid-cols-[220px_1fr] md:gap-8">
         <div className="flex flex-col items-center">
-          <div className="relative h-[184px] w-[184px]" role="img" aria-label={`${overall}% of supplier assignments ready: ${totals.ready} ready, ${totals.action} actions required, ${totals.notReady} not ready`}>
+          <div className="relative h-[184px] w-[184px]" role="img" aria-label={`${overall}% of subcontractor assignments ready: ${totals.ready} ready, ${totals.action} actions required, ${totals.notReady} not ready`}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={data} dataKey="value" innerRadius={62} outerRadius={88} paddingAngle={totals.total ? 1.5 : 0} startAngle={90} endAngle={-270} stroke="none" isAnimationActive={false}>
@@ -82,7 +82,7 @@ export function ReadinessChart({ stats }: { stats: PackageStats[] }) {
         <div className="min-w-0">
           <div className="mb-2 flex items-center justify-between text-xs text-muted">
             <span>Package · mobilisation</span>
-            <span>Suppliers ready</span>
+            <span>Subcontractors ready</span>
           </div>
           {shown.length === 0 ? (
             <p className="py-10 text-center text-[13px] text-muted">No live packages mobilise in this range.</p>

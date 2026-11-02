@@ -2,7 +2,7 @@ import { ClipboardCheck, Layers, Link2, ShieldQuestion } from 'lucide-react';
 import { PACKAGES, REQUIREMENTS_BY_ID } from '../../data/demoData';
 import { TRADE_LABELS, formatDate } from '../../lib/formatters';
 import { setsFor } from '../../lib/readinessEngine';
-import type { Supplier } from '../../types';
+import type { Subcontractor } from '../../types';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { Field, Input, Select } from '../ui/Form';
@@ -15,34 +15,34 @@ export interface CheckInputs {
 }
 
 export function ReadinessForm({
-  suppliers,
+  subcontractors,
   inputs,
   onChange,
   onRun,
   dateError,
 }: {
-  suppliers: Supplier[];
+  subcontractors: Subcontractor[];
   inputs: CheckInputs;
   onChange: (next: Partial<CheckInputs>) => void;
   onRun: () => void;
   dateError?: string;
 }) {
-  const supplier = suppliers.find((s) => s.id === inputs.supplierId);
+  const subcontractor = subcontractors.find((s) => s.id === inputs.supplierId);
   const pkg = PACKAGES.find((p) => p.id === inputs.packageId);
-  const sets = supplier && pkg ? setsFor(supplier, pkg) : [];
+  const sets = subcontractor && pkg ? setsFor(subcontractor, pkg) : [];
   const total = sets.reduce((n, s) => n + s.requirementIds.length, 0);
   const assignment = pkg?.assignments.find((a) => a.supplierId === inputs.supplierId);
   const datesChanged = pkg && (inputs.mobilisation !== pkg.mobilisation || inputs.finish !== pkg.finish);
-  const sorted = [...suppliers].sort((a, b) => a.name.localeCompare(b.name));
+  const sorted = [...subcontractors].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <Card className="p-5 lg:sticky lg:top-20">
       <h2 className="text-[15px] font-semibold">Check details</h2>
-      <p className="mt-0.5 text-[13px] text-muted">One supplier, one package, one assessment window.</p>
+      <p className="mt-0.5 text-[13px] text-muted">One subcontractor, one package, one assessment window.</p>
 
       <div className="mt-5 space-y-4">
-        <Field label="Supplier" htmlFor="rc-supplier">
-          <Select id="rc-supplier" value={inputs.supplierId} onChange={(e) => onChange({ supplierId: e.target.value })}>
+        <Field label="Subcontractor" htmlFor="rc-subcontractor">
+          <Select id="rc-subcontractor" value={inputs.supplierId} onChange={(e) => onChange({ supplierId: e.target.value })}>
             {sorted.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name} — {TRADE_LABELS[s.trade]}{s.status === 'invited' ? ' (invited)' : ''}

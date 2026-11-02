@@ -1,4 +1,5 @@
 import { CalendarCheck, Info, Layers, ListChecks, PoundSterling, ScanLine, UserCheck } from 'lucide-react';
+import { RequirementFinder } from '../components/library/RequirementFinder';
 import { PageHeader } from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -6,7 +7,7 @@ import { Card, CardHeader, TableWrap } from '../components/ui/Card';
 import { Modal } from '../components/ui/Overlay';
 import { PACKAGES, REQUIREMENTS_BY_ID, REQUIREMENT_SETS } from '../data/demoData';
 import { TRADE_LABELS, formatCover, formatDate } from '../lib/formatters';
-import { navigate, setParam, type Route } from '../lib/router';
+import { navigate, setParam, setParams, type Route } from '../lib/router';
 import { useStore } from '../lib/store';
 import type { Requirement, RequirementSet } from '../types';
 
@@ -60,7 +61,7 @@ function SetRows({ sets, onOpen, usage }: { sets: RequirementSet[]; onOpen: (id:
 }
 
 export function RequirementLibrary({ route }: { route: Route }) {
-  const { suppliers } = useStore();
+  const { subcontractors } = useStore();
   const openId = route.params.get('set');
   const open = REQUIREMENT_SETS.find((s) => s.id === openId);
   const trade = REQUIREMENT_SETS.filter((s) => s.kind === 'trade');
@@ -68,8 +69,8 @@ export function RequirementLibrary({ route }: { route: Route }) {
 
   const usage = (s: RequirementSet) => {
     if (s.kind === 'package') return PACKAGES.find((p) => p.id === s.packageId)?.name ?? '—';
-    const n = suppliers.filter((x) => x.trade === s.trade).length;
-    return `${n} supplier${n === 1 ? '' : 's'}`;
+    const n = subcontractors.filter((x) => x.trade === s.trade).length;
+    return `${n} subcontractor${n === 1 ? '' : 's'}`;
   };
 
   return (
@@ -80,8 +81,9 @@ export function RequirementLibrary({ route }: { route: Route }) {
         description="Versioned requirement sets per trade, with package-specific additions layered on top. Each readiness check records the versions it used."
       />
       <div className="space-y-6">
+        <RequirementFinder route={route} />
         <Card>
-          <CardHeader title="Trade requirement sets" subtitle={`${trade.length} sets · applied to every supplier of that trade`} />
+          <CardHeader title="Trade requirement sets" subtitle={`${trade.length} sets · applied to every subcontractor of that trade`} />
           <SetRows sets={trade} onOpen={(id) => setParam(route, 'set', id)} usage={usage} />
         </Card>
         <Card>
@@ -120,6 +122,13 @@ export function RequirementLibrary({ route }: { route: Route }) {
                     {ruleSummary(r).map(({ icon: Icon, text }) => (
                       <span key={text} className="inline-flex items-center gap-1.5 text-xs text-ink/80"><Icon className="h-3.5 w-3.5 text-brand" />{text}</span>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => { setParams(route, { set: null, req: rid }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="text-xs font-medium text-brand hover:text-brand-dark"
+                    >
+                      Find ready subcontractors →
+                    </button>
                   </div>
                 </li>
               );

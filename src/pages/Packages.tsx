@@ -5,61 +5,147 @@ import { ActionsTable } from '../components/readiness/CorrectiveActions';
 import { Badge, VerdictBadge, type Tone } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, EmptyState, ProgressBar, TableWrap } from '../components/ui/Card';
-import { SearchInput, Select } from '../components/ui/Form';
+import { SearchInput, Segmented, Select } from '../components/ui/Form';
 import { PACKAGES, REQUIREMENTS_BY_ID, REQUIREMENT_SETS, TRADE_SET } from '../data/demoData';
 import { assignmentKey, type PackageStats } from '../lib/derive';
 import { DEMO_TODAY, TRADE_LABELS, daysBetween, formatDate } from '../lib/formatters';
 import { rank } from '../lib/readinessEngine';
-import { navigate, setParam, type Route } from '../lib/router';
+import { navigate, setParam, setParams, type Route } from '../lib/router';
 import { useStore } from '../lib/store';
 
-const STATUS_TONE: Record<PackageStats['status'], Tone> = { 'At risk': 'bad', 'Actions open': 'warn', 'Ready to mobilise': 'ok' };
+const STATUS_TONE: Record<PackageStats['status'], Tone> = { 'Not ready': 'bad', 'Actions required': 'warn', Ready: 'ok' };
+
+type View = 'cards' | 'table';
+
+function PackageCard({ s }: { s: PackageStats }) {
+  const attention = s.action + s.notReady;
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(`/packages/${s.pkg.id}`)}
+      className="card group flex flex-col p-5 text-left transition-colors hover:border-[#CFD8E2] [&>*]:w-full"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-2xs font-semibold uppercase tracking-[0.08em] text-muted">{s.pkg.category} package</div>
+          <div className="mt-1 text-[16px] font-semibold text-ink group-hover:text-brand-dark">{s.pkg.name}</div>
+          <div className="mt-0.5 text-[13px] text-muted">{s.pkg.scope} · starts {formatDate(s.pkg.mobilisation)}</div>
+        </div>
+        <Badge tone={STATUS_TONE[s.status]} dot className="shrink-0">{s.status}</Badge>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between text-[13px]">
+        <span className="text-ink">Subcontractor readiness</span>
+        <span className="tnum font-semibold text-ink">{s.readiness}%</span>
+      </div>
+      <ProgressBar value={s.readiness} tone="brand" className="mt-2 !h-2" />
+
+      <div className="mt-4 grid grid-cols-3 gap-3 border-t border-line-soft pt-3.5">
+        {[
+          { v: s.total, l: 'Subcontractors' },
+          { v: s.ready, l: 'Ready' },
+          { v: attention, l: 'Need attention', cls: attention ? 'text-ink' : 'text-subtle' },
+        ].map((x) => (
+          <div key={x.l}>
+            <div className={`tnum text-[17px] font-semibold ${x.cls ?? 'text-ink'}`}>{x.v}</div>
+            <div className="text-xs text-muted">{x.l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-soft pt-3 text-xs text-muted">
+        <span>{s.pkg.site}</span>
+        <span className="text-subtle">·</span>
+        <span>{s.pkg.value}</span>
+        <span className="text-subtle">·</span>
+        <span>{s.pkg.manager}</span>
+      </div>
+    </button>
+  );
+}
 
 export function Packages({ route }: { route: Route }) {
-  const { derived } = useStore();
+  const { derived, subcontractors } = useStore();
   const [q, setQ] = useState('');
   const status = route.params.get('status') ?? 'all';
+  const setFilter = route.params.get('set') ?? 'all';
+  const view: View = route.params.get('view') === 'table' ? 'table' : 'cards';
+
+  // A package "uses" a requirement set if it is the package addition or the trade set of an appointed subcontractor.
+  const usesSet = (pkg: PackageStats['pkg'], setId: string) =>
+    pkg.overlaySetId === setId ||
+    pkg.assignments.some((a) => {
+      const t = subcontractors.find((x) => x.id === a.supplierId)?.trade;
+      return t && TRADE_SET[t] === setId;
+    });
 
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
     return derived.packageStats
-      .filter((s) => !term || `${s.pkg.name} ${s.pkg.site} ${s.pkg.scope}`.toLowerCase().includes(term))
+      .filter((s) => !term || `${s.pkg.name} ${s.pkg.site} ${s.pkg.scope} ${s.pkg.category} ${s.pkg.manager}`.toLowerCase().includes(term))
       .filter((s) => {
         if (status === 'all') return true;
-        if (status === 'open') return s.status !== 'Ready to mobilise';
+        if (status === 'open') return s.status !== 'Ready';
         return s.status === status;
       })
+      .filter((s) => setFilter === 'all' || usesSet(s.pkg, setFilter))
       .sort((a, b) => a.pkg.mobilisation.localeCompare(b.pkg.mobilisation));
-  }, [derived, q, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [derived, q, status, setFilter, subcontractors]);
+
+  const clear = () => {
+    setQ('');
+    setParams(route, { status: null, set: null });
+  };
 
   return (
     <>
       <PageHeader
-        eyebrow="Live packages"
+        eyebrow="Buyer console"
         title="Packages"
-        description="Each package carries its own dates, appointed suppliers and package-specific requirements."
+        description="Track readiness separately for every scope and planned start date."
         actions={<Button variant="primary" icon={ClipboardCheck} onClick={() => navigate('/readiness')}>Run readiness check</Button>}
       />
-      <Card>
-        <div className="flex flex-col gap-3 border-b border-line-soft px-5 py-4 md:flex-row md:items-center">
-          <div className="mr-auto">
-            <h2 className="text-[15px] font-semibold">Package register</h2>
-            <p className="text-[13px] text-muted">{rows.length} of {PACKAGES.length} live packages · ordered by mobilisation</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <SearchInput value={q} onChange={setQ} placeholder="Search packages or sites" className="w-full sm:w-64" />
-            <Select value={status} onChange={(e) => setParam(route, 'status', e.target.value === 'all' ? null : e.target.value)} aria-label="Filter by status" className="w-full sm:w-48">
-              <option value="all">All statuses</option>
-              <option value="open">Not yet ready</option>
-              <option value="At risk">At risk</option>
-              <option value="Actions open">Actions open</option>
-              <option value="Ready to mobilise">Ready to mobilise</option>
-            </Select>
-          </div>
+
+      <div className="mb-4 flex flex-col gap-2 lg:flex-row lg:items-center">
+        <SearchInput value={q} onChange={setQ} placeholder="Search packages, sites or managers" className="flex-1" />
+        <div className="flex flex-wrap gap-2">
+          <Select value={status} onChange={(e) => setParam(route, 'status', e.target.value === 'all' ? null : e.target.value)} aria-label="Filter by status" className="w-[calc(50%-4px)] sm:w-44">
+            <option value="all">All statuses</option>
+            <option value="open">Not yet ready</option>
+            <option value="Not ready">Not ready</option>
+            <option value="Actions required">Actions required</option>
+            <option value="Ready">Ready</option>
+          </Select>
+          <Select value={setFilter} onChange={(e) => setParam(route, 'set', e.target.value === 'all' ? null : e.target.value)} aria-label="Filter by requirement set" className="w-[calc(50%-4px)] sm:w-56">
+            <option value="all">All requirement sets</option>
+            {REQUIREMENT_SETS.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </Select>
+          <Segmented<View>
+            value={view}
+            onChange={(v) => setParam(route, 'view', v === 'cards' ? null : v)}
+            options={[{ value: 'cards', label: 'Cards' }, { value: 'table', label: 'Table' }]}
+          />
         </div>
-        {rows.length === 0 ? (
-          <EmptyState icon={FolderX} title="No packages match" description="Try another search or status." action={<Button size="sm" onClick={() => { setQ(''); setParam(route, 'status', null); }}>Clear filters</Button>} />
-        ) : (
+      </div>
+
+      {rows.length === 0 ? (
+        <Card>
+          <EmptyState icon={FolderX} title="No packages match" description="Try another search, status or requirement set." action={<Button size="sm" onClick={clear}>Clear filters</Button>} />
+        </Card>
+      ) : view === 'cards' ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {rows.map((s) => <PackageCard key={s.pkg.id} s={s} />)}
+          </div>
+          <p className="mt-3 text-xs text-muted">{rows.length} of {PACKAGES.length} live packages · ordered by start date · select a package for subcontractors, requirements and open issues</p>
+        </>
+      ) : (
+      <Card>
+        <div className="border-b border-line-soft px-5 py-4">
+          <h2 className="text-[15px] font-semibold">Package register</h2>
+          <p className="text-[13px] text-muted">{rows.length} of {PACKAGES.length} live packages · ordered by mobilisation</p>
+        </div>
           <TableWrap>
             <table className="w-full min-w-[960px]">
               <thead className="border-b border-line-soft">
@@ -68,7 +154,7 @@ export function Packages({ route }: { route: Route }) {
                   <th className="th">Site / project</th>
                   <th className="th">Trade / scope</th>
                   <th className="th">Mobilisation</th>
-                  <th className="th text-right">Suppliers</th>
+                  <th className="th text-right">Subcontractors</th>
                   <th className="th w-[170px]">Readiness</th>
                   <th className="th text-right">Open actions</th>
                   <th className="th pr-5">Status</th>
@@ -101,14 +187,14 @@ export function Packages({ route }: { route: Route }) {
               </tbody>
             </table>
           </TableWrap>
-        )}
       </Card>
+      )}
     </>
   );
 }
 
 export function PackageDetail({ id }: { id: string }) {
-  const { derived, suppliers } = useStore();
+  const { derived, subcontractors } = useStore();
   const stats = derived.packageStats.find((s) => s.pkg.id === id);
 
   if (!stats) {
@@ -120,10 +206,10 @@ export function PackageDetail({ id }: { id: string }) {
   }
 
   const { pkg } = stats;
-  const name = (sid: string) => suppliers.find((s) => s.id === sid)?.name ?? sid;
+  const name = (sid: string) => subcontractors.find((s) => s.id === sid)?.name ?? sid;
   const actions = stats.assessments.flatMap((a) => a.actions).sort((a, b) => rank(a.priority) - rank(b.priority) || a.due.localeCompare(b.due));
   const overlay = REQUIREMENT_SETS.find((s) => s.id === pkg.overlaySetId);
-  const tradeSets = [...new Set(pkg.assignments.map((a) => suppliers.find((s) => s.id === a.supplierId)?.trade).filter(Boolean))].map(
+  const tradeSets = [...new Set(pkg.assignments.map((a) => subcontractors.find((s) => s.id === a.supplierId)?.trade).filter(Boolean))].map(
     (t) => REQUIREMENT_SETS.find((s) => s.id === TRADE_SET[t!])!,
   );
   const firstIssue = stats.assessments.find((a) => a.verdict !== 'ready');
@@ -132,7 +218,7 @@ export function PackageDetail({ id }: { id: string }) {
     { icon: CalendarClock, label: 'Mobilisation', value: formatDate(pkg.mobilisation), hint: `in ${daysBetween(DEMO_TODAY, pkg.mobilisation)} days` },
     { icon: CalendarRange, label: 'Package finish', value: formatDate(pkg.finish), hint: `${Math.round(daysBetween(pkg.mobilisation, pkg.finish) / 7)} weeks on site` },
     { icon: CalendarCheck2, label: 'Go / no-go review', value: formatDate(pkg.reviewDate), hint: `in ${daysBetween(DEMO_TODAY, pkg.reviewDate)} days` },
-    { icon: Users, label: 'Suppliers ready', value: `${stats.ready} of ${stats.total}`, hint: `${stats.action} with actions · ${stats.notReady} not ready` },
+    { icon: Users, label: 'Subcontractors ready', value: `${stats.ready} of ${stats.total}`, hint: `${stats.action} with actions · ${stats.notReady} not ready` },
   ];
 
   return (
@@ -155,7 +241,7 @@ export function PackageDetail({ id }: { id: string }) {
           <Button
             variant="primary"
             icon={ClipboardCheck}
-            onClick={() => navigate(`/readiness?supplier=${(firstIssue ?? stats.assessments[0]).supplierId}&package=${pkg.id}&run=1`)}
+            onClick={() => navigate(`/readiness?subcontractor=${(firstIssue ?? stats.assessments[0]).supplierId}&package=${pkg.id}&run=1`)}
           >
             {firstIssue ? 'Check first open issue' : 'Run readiness check'}
           </Button>
@@ -175,12 +261,12 @@ export function PackageDetail({ id }: { id: string }) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-6">
           <Card>
-            <CardHeader title="Appointed suppliers" subtitle={`Assessed at mobilisation (${formatDate(pkg.mobilisation)}) through finish`} actions={<span className="tnum text-[13px] font-medium text-ink">{stats.readiness}% ready</span>} />
+            <CardHeader title="Appointed subcontractors" subtitle={`Assessed at mobilisation (${formatDate(pkg.mobilisation)}) through finish`} actions={<span className="tnum text-[13px] font-medium text-ink">{stats.readiness}% ready</span>} />
             <TableWrap>
               <table className="w-full min-w-[720px]">
                 <thead className="border-b border-line-soft">
                   <tr>
-                    <th className="th pl-5">Supplier</th>
+                    <th className="th pl-5">Subcontractor</th>
                     <th className="th">Scope of works</th>
                     <th className="th">Evidence due</th>
                     <th className="th text-right">Actions</th>
@@ -190,10 +276,10 @@ export function PackageDetail({ id }: { id: string }) {
                 <tbody className="divide-y divide-line-soft">
                   {pkg.assignments.map((asg) => {
                     const a = derived.assessments.get(assignmentKey(pkg.id, asg.supplierId));
-                    const s = suppliers.find((x) => x.id === asg.supplierId);
+                    const s = subcontractors.find((x) => x.id === asg.supplierId);
                     if (!a || !s) return null;
                     return (
-                      <tr key={asg.supplierId} className="row-link" onClick={() => navigate(`/readiness?supplier=${s.id}&package=${pkg.id}&run=1`)}>
+                      <tr key={asg.supplierId} className="row-link" onClick={() => navigate(`/readiness?subcontractor=${s.id}&package=${pkg.id}&run=1`)}>
                         <td className="td pl-5">
                           <div className="whitespace-nowrap text-[13px] font-medium text-ink">{s.name}</div>
                           <div className="text-xs text-muted">{TRADE_LABELS[s.trade]}</div>
@@ -213,7 +299,7 @@ export function PackageDetail({ id }: { id: string }) {
           <Card>
             <CardHeader title="Open issues" subtitle={`${actions.length} corrective action${actions.length === 1 ? '' : 's'} across this package`} />
             {actions.length === 0 ? (
-              <EmptyState icon={ListChecks} title="No open issues" description="Every appointed supplier satisfies every requirement for the package window." />
+              <EmptyState icon={ListChecks} title="No open issues" description="Every appointed subcontractor satisfies every requirement for the package window." />
             ) : (
               <ActionsTable actions={actions} supplierName={name} />
             )}
@@ -221,7 +307,7 @@ export function PackageDetail({ id }: { id: string }) {
         </div>
 
         <Card className="h-fit">
-          <CardHeader title="Requirements applied" subtitle="Trade set per supplier, plus package additions" />
+          <CardHeader title="Requirements applied" subtitle="Trade set per subcontractor, plus package additions" />
           <div className="space-y-4 p-5">
             {overlay ? (
               <div>

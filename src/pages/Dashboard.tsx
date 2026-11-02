@@ -20,7 +20,7 @@ export function Dashboard() {
       <PageHeader
         eyebrow={`Portfolio overview · ${formatLongDate(DEMO_TODAY)}`}
         title="Compliance dashboard"
-        description="See which suppliers are ready for each package and planned start date—before mobilisation is at risk."
+        description="See which subcontractors are ready for each package and planned start date—before mobilisation is at risk."
         actions={
           <>
             <Button icon={Library} onClick={() => navigate('/library')}>Open requirement library</Button>
@@ -32,11 +32,11 @@ export function Dashboard() {
       <WorkflowStrip />
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        <MetricCard icon={ShieldCheck} accent="brand" value={`${kpis.complianceRate}%`} label="Supplier compliance rate" context={`${kpis.ready} of ${kpis.assignments} package assignments ready`} onClick={() => navigate('/packages')} />
-        <MetricCard icon={CalendarClock} accent="warn" value={kpis.expiring60} label="Documents expiring in 60 days" context={`${kpis.expiring30} of them within 30 days`} onClick={() => navigate('/suppliers?view=expiring')} />
+        <MetricCard icon={ShieldCheck} accent="brand" value={`${kpis.complianceRate}%`} label="Subcontractor compliance rate" context={`${kpis.ready} of ${kpis.assignments} package assignments ready`} onClick={() => navigate('/packages')} />
+        <MetricCard icon={CalendarClock} accent="warn" value={kpis.expiring60} label="Documents expiring in 60 days" context={`${kpis.expiring30} of them within 30 days`} onClick={() => navigate('/subcontractors?view=expiring')} />
         <MetricCard icon={FileSearch} accent="info" value={kpis.outstandingChecks} label="Outstanding evidence checks" context="Awaiting a reviewer decision" onClick={() => navigate('/review')} />
-        <MetricCard icon={AlertTriangle} accent="bad" value={kpis.highRisk} label="High-risk suppliers" context="Not ready for a live package" onClick={() => navigate('/suppliers?risk=high')} />
-        <MetricCard icon={ListTodo} accent="navy" value={kpis.openActions} label="Actions requiring attention" context={`Across ${nonReady} supplier assignments`} onClick={() => navigate('/packages?status=open')} />
+        <MetricCard icon={AlertTriangle} accent="bad" value={kpis.highRisk} label="High-risk subcontractors" context="Not ready for a live package" onClick={() => navigate('/subcontractors?risk=high')} />
+        <MetricCard icon={ListTodo} accent="navy" value={kpis.openActions} label="Actions requiring attention" context={`Across ${nonReady} subcontractor assignments`} onClick={() => navigate('/packages?status=open')} />
       </div>
 
       <div className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">

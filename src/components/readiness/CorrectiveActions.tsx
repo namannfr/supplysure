@@ -11,7 +11,7 @@ export function ActionsTable({ actions, supplierName }: { actions: CorrectiveAct
       <table className="w-full min-w-[720px]">
         <thead className="border-b border-line-soft">
           <tr>
-            {supplierName && <th className="th pl-5">Supplier</th>}
+            {supplierName && <th className="th pl-5">Subcontractor</th>}
             <th className={`th w-[34%] ${supplierName ? '' : 'pl-5'}`}>Issue</th>
             <th className="th">Priority</th>
             <th className="th w-[38%]">Recommended action</th>

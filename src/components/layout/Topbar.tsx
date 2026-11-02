@@ -24,7 +24,7 @@ import { useOutsideClick } from '../ui/Overlay';
 interface SearchResult { id: string; group: string; icon: LucideIcon; title: string; meta: string; to: string }
 
 function GlobalSearch() {
-  const { suppliers, evidence, audits } = useStore();
+  const { subcontractors, evidence, audits } = useStore();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -48,25 +48,25 @@ function GlobalSearch() {
     const term = q.trim().toLowerCase();
     if (term.length < 2) return [];
     const has = (...xs: (string | undefined)[]) => xs.some((x) => x?.toLowerCase().includes(term));
-    const supplierName = (id: string) => suppliers.find((s) => s.id === id)?.name ?? id;
+    const supplierName = (id: string) => subcontractors.find((s) => s.id === id)?.name ?? id;
     const out: SearchResult[] = [];
-    suppliers
+    subcontractors
       .filter((s) => has(s.name, TRADE_LABELS[s.trade], s.location, s.contactName))
       .slice(0, 5)
-      .forEach((s) => out.push({ id: s.id, group: 'Suppliers', icon: Users, title: s.name, meta: `${TRADE_LABELS[s.trade]} · ${s.location}`, to: `/suppliers?supplier=${s.id}` }));
+      .forEach((s) => out.push({ id: s.id, group: 'Subcontractors', icon: Users, title: s.name, meta: `${TRADE_LABELS[s.trade]} · ${s.location}`, to: `/subcontractors?subcontractor=${s.id}` }));
     PACKAGES.filter((p) => has(p.name, p.site, p.scope))
       .slice(0, 4)
       .forEach((p) => out.push({ id: p.id, group: 'Packages', icon: FolderKanban, title: p.name, meta: `${p.site} · mobilises ${formatShortDate(p.mobilisation)}`, to: `/packages/${p.id}` }));
     evidence
       .filter((e) => has(e.id, e.title, e.label, e.reference, supplierName(e.supplierId)))
       .slice(0, 6)
-      .forEach((e) => out.push({ id: e.id, group: 'Evidence', icon: FileText, title: `${e.title}`, meta: `${supplierName(e.supplierId)} · ${e.id} · ${e.reference}`, to: `/suppliers?supplier=${e.supplierId}&evidence=${e.id}` }));
+      .forEach((e) => out.push({ id: e.id, group: 'Evidence', icon: FileText, title: `${e.title}`, meta: `${supplierName(e.supplierId)} · ${e.id} · ${e.reference}`, to: `/subcontractors?subcontractor=${e.supplierId}&evidence=${e.id}` }));
     audits
       .filter((a) => has(a.id, supplierName(a.assessment.supplierId)))
       .slice(0, 3)
       .forEach((a) => out.push({ id: a.id, group: 'Audit packs', icon: FileArchive, title: a.id, meta: `${supplierName(a.assessment.supplierId)} · ${PACKAGES.find((p) => p.id === a.assessment.packageId)?.name}`, to: `/audit?record=${a.id}` }));
     return out;
-  }, [q, suppliers, evidence, audits]);
+  }, [q, subcontractors, evidence, audits]);
 
   useEffect(() => setActive(0), [q]);
 
@@ -91,7 +91,7 @@ function GlobalSearch() {
           if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(i - 1, 0)); }
           if (e.key === 'Enter' && results[active]) choose(results[active]);
         }}
-        placeholder="Search suppliers, packages, evidence…"
+        placeholder="Search subcontractors, packages, evidence…"
         aria-label="Global search"
         className="h-9 w-full rounded-md border border-line bg-canvas pl-9 pr-14 text-[13px] text-ink placeholder:text-subtle transition-colors focus:border-brand-accent focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-accent/20"
       />
@@ -138,8 +138,8 @@ function Notifications() {
 
   const top = derived.attention[0];
   const items = [
-    top && { id: 'n-top', icon: AlertOctagon, tone: 'text-bad', title: top.issue, meta: `${top.title} · ${top.kind === 'supplier' ? PACKAGES.find((p) => p.id === top.packageId)?.name : 'package'}`, to: top.supplierId ? `/readiness?supplier=${top.supplierId}&package=${top.packageId}&run=1` : `/packages/${top.packageId}` },
-    { id: 'n-expiring', icon: CalendarClock, tone: 'text-warn', title: `${derived.kpis.expiring30} documents expire within 30 days`, meta: 'Supplier passports', to: '/suppliers?view=expiring' },
+    top && { id: 'n-top', icon: AlertOctagon, tone: 'text-bad', title: top.issue, meta: `${top.title} · ${top.kind === 'subcontractor' ? PACKAGES.find((p) => p.id === top.packageId)?.name : 'package'}`, to: top.supplierId ? `/readiness?subcontractor=${top.supplierId}&package=${top.packageId}&run=1` : `/packages/${top.packageId}` },
+    { id: 'n-expiring', icon: CalendarClock, tone: 'text-warn', title: `${derived.kpis.expiring30} documents expire within 30 days`, meta: 'Subcontractor passports', to: '/subcontractors?view=expiring' },
     { id: 'n-review', icon: Inbox, tone: 'text-info', title: `${derived.kpis.outstandingChecks} evidence items awaiting review`, meta: 'Review Queue', to: '/review' },
     ...[...PACKAGES].sort((a, b) => a.reviewDate.localeCompare(b.reviewDate)).slice(0, 1).map((p) => (
       { id: `n-review-${p.id}`, icon: FolderKanban, tone: 'text-muted', title: `${p.name} go / no-go review on ${formatShortDate(p.reviewDate)}`, meta: 'Next package review', to: `/packages/${p.id}` }
@@ -215,7 +215,7 @@ function ProfileMenu({ onHowItWorks, onReset }: { onHowItWorks: () => void; onRe
           </div>
           <div className="my-1 border-t border-line-soft" />
           <button type="button" onClick={() => { setOpen(false); onHowItWorks(); }} className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-canvas">
-            <HelpCircle className="h-4 w-4 text-muted" /> How SupplySure works
+            <HelpCircle className="h-4 w-4 text-muted" /> How Reviqa works
           </button>
           <button type="button" onClick={() => { setOpen(false); onReset(); }} className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] hover:bg-canvas">
             <RotateCcw className="h-4 w-4 text-muted" /> Reset demonstration data

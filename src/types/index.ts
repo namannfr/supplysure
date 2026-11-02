@@ -54,7 +54,7 @@ export interface RequirementSet {
   requirementIds: string[];
 }
 
-export interface Supplier {
+export interface Subcontractor {
   id: string;
   name: string;
   trade: TradeId;
@@ -89,7 +89,7 @@ export interface EvidenceRecord {
 export interface Assignment {
   supplierId: string;
   scopeOfWorks: string;
-  /** Pre-start evidence deadline for this supplier; defaults to the package review date. */
+  /** Pre-start evidence deadline for this subcontractor; defaults to the package review date. */
   evidenceDue?: string;
 }
 
@@ -98,6 +98,8 @@ export interface Package {
   name: string;
   site: string;
   scope: string;
+  /** Short label shown on package cards, e.g. “Building services”. */
+  category: string;
   value: string;
   manager: string;
   mobilisation: string;

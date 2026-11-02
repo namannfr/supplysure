@@ -1,7 +1,7 @@
 import { Download, FileArchive } from 'lucide-react';
 import { PACKAGES } from '../../data/demoData';
 import { VERDICT_LABELS, formatDate, formatDateTime, pct } from '../../lib/formatters';
-import type { Assessment, Supplier } from '../../types';
+import type { Assessment, Subcontractor } from '../../types';
 import { Button } from '../ui/Button';
 
 function Ring({ value, color }: { value: number | null; color: string }) {
@@ -27,12 +27,12 @@ const VERDICT_COLOR = { ready: '#2DD4BF', action: '#F2B857', not_ready: '#F07A84
 
 export function ReadinessSummary({
   assessment,
-  supplier,
+  subcontractor,
   onExport,
   onSavePack,
 }: {
   assessment: Assessment | null;
-  supplier?: Supplier;
+  subcontractor?: Subcontractor;
   onExport: () => void;
   onSavePack: () => void;
 }) {
@@ -46,7 +46,7 @@ export function ReadinessSummary({
             <div className="text-2xs font-semibold uppercase tracking-[0.08em] text-brand-accent">Overall readiness</div>
             <h2 className="mt-1 text-lg font-semibold">Select a package to begin</h2>
             <p className="mt-1 max-w-lg text-[13px] leading-relaxed text-navy-muted">
-              Results show each requirement, the evidence used and its source, and a recommended action wherever the supplier falls short.
+              Results show each requirement, the evidence used and its source, and a recommended action wherever the subcontractor falls short.
             </p>
           </div>
         </div>
@@ -76,7 +76,7 @@ export function ReadinessSummary({
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
               <h2 className="text-xl font-semibold">{VERDICT_LABELS[verdict]}</h2>
             </div>
-            <p className="mt-1 text-[13px] text-[#C9D5E1]">{supplier?.name} → {pkg.name}</p>
+            <p className="mt-1 text-[13px] text-[#C9D5E1]">{subcontractor?.name} → {pkg.name}</p>
             <p className="text-xs text-navy-muted">
               Window {formatDate(assessment.mobilisation)} → {formatDate(assessment.finish)} · calculated {formatDateTime(assessment.ranAt)}
             </p>

@@ -1,5 +1,5 @@
 /**
- * SupplySure demonstration dataset.
+ * Reviqa demonstration dataset.
  *
  * One coherent, fictional story for Northstar Construction (buyer workspace). Every page reads from
  * this file through the store and the readiness engine — no figure on screen is typed in by hand.
@@ -10,7 +10,7 @@ import type {
   Package,
   Requirement,
   RequirementSet,
-  Supplier,
+  Subcontractor,
   TradeId,
 } from '../types';
 
@@ -36,7 +36,7 @@ export const REQUIREMENTS: Requirement[] = [
   R({ id: 'REQ-PL', code: 'INS-01', evidenceType: 'pl', name: 'Public liability insurance (min. £5m)', shortName: 'Public liability insurance', description: 'Current public liability cover of at least £5m for the full package period.', critical: true, checksValidity: true, minCover: 5_000_000 }),
   R({ id: 'REQ-EL', code: 'INS-02', evidenceType: 'el', name: "Employer's liability insurance (min. £10m)", shortName: "Employer's liability insurance", description: "Statutory employer's liability cover of at least £10m.", critical: true, checksValidity: true, minCover: 10_000_000 }),
   R({ id: 'REQ-SSIP', code: 'HS-01', evidenceType: 'ssip', name: 'Health & safety accreditation (SSIP)', shortName: 'H&S accreditation', description: 'SSIP-recognised accreditation such as CHAS or SafeContractor, valid for the package.', critical: true, checksValidity: true }),
-  R({ id: 'REQ-IR35', code: 'EMP-01', evidenceType: 'ir35', name: 'Employment status (IR35) determination', shortName: 'IR35 status', description: 'Status determination for labour engaged through the supplier. Always reviewed by a person.', critical: false, checksValidity: false, manualAssessment: true }),
+  R({ id: 'REQ-IR35', code: 'EMP-01', evidenceType: 'ir35', name: 'Employment status (IR35) determination', shortName: 'IR35 status', description: 'Status determination for labour engaged through the subcontractor. Always reviewed by a person.', critical: false, checksValidity: false, manualAssessment: true }),
   R({ id: 'REQ-ISO', code: 'QM-01', evidenceType: 'iso9001', name: 'Quality management (ISO 9001)', shortName: 'ISO 9001 certificate', description: 'Certified quality management system. Non-critical: an exception may be recorded.', critical: false, checksValidity: true }),
 
   // Electrical
@@ -113,10 +113,10 @@ export const TRADE_SET: Record<TradeId, string> = {
 };
 
 /* ------------------------------------------------------------------ */
-/* Suppliers                                                           */
+/* Subcontractors                                                           */
 /* ------------------------------------------------------------------ */
 
-const S = (id: string, name: string, trade: TradeId, location: string, contactName: string, joined: string): Supplier => ({
+const S = (id: string, name: string, trade: TradeId, location: string, contactName: string, joined: string): Subcontractor => ({
   id,
   name,
   trade,
@@ -127,7 +127,7 @@ const S = (id: string, name: string, trade: TradeId, location: string, contactNa
   joined,
 });
 
-export const SUPPLIERS: Supplier[] = [
+export const SUPPLIERS: Subcontractor[] = [
   S('S01', 'Apex Electrical Services', 'electrical', 'Leeds', 'Gareth Mills', '2025-03-11'),
   S('S02', 'BrightSpark M&E', 'mechanical', 'Wakefield', 'Leanne Carter', '2025-05-02'),
   S('S03', 'Solaris Renewables', 'renewables', 'Bristol', 'Owen Pryce', '2025-01-20'),
@@ -178,7 +178,7 @@ export const SUPPLIERS: Supplier[] = [
 
 export const PACKAGES: Package[] = [
   {
-    id: 'P01', name: 'Riverside Apartments', site: 'Riverside Quarter, Leeds', scope: 'Building services & envelope',
+    id: 'P01', name: 'Riverside Apartments', category: 'Building services', site: 'Riverside Quarter, Leeds', scope: 'Building services & envelope',
     value: '£4.8m', manager: 'Tom Whitaker', mobilisation: '2026-11-23', finish: '2027-07-30', reviewDate: '2026-11-13',
     overlaySetId: 'RS-PK-RV',
     assignments: [
@@ -192,7 +192,7 @@ export const PACKAGES: Package[] = [
     ],
   },
   {
-    id: 'P02', name: 'Southbank Offices', site: 'Southbank Place, London SE1', scope: 'Cat A office fit-out',
+    id: 'P02', name: 'Southbank Offices', category: 'Fit-out', site: 'Southbank Place, London SE1', scope: 'Cat A office fit-out',
     value: '£2.1m', manager: 'Priya Shah', mobilisation: '2026-11-12', finish: '2027-05-28', reviewDate: '2026-11-02',
     overlaySetId: 'RS-PK-SB',
     assignments: [
@@ -204,7 +204,7 @@ export const PACKAGES: Package[] = [
     ],
   },
   {
-    id: 'P03', name: 'Beacon School', site: 'Beacon Primary School, Sheffield', scope: 'Education new-build',
+    id: 'P03', name: 'Beacon School', category: 'Education', site: 'Beacon Primary School, Sheffield', scope: 'Education new-build',
     value: '£3.6m', manager: 'Dana Nolan', mobilisation: '2026-11-16', finish: '2027-08-20', reviewDate: '2026-11-06',
     overlaySetId: 'RS-PK-BS',
     assignments: [
@@ -215,7 +215,7 @@ export const PACKAGES: Package[] = [
     ],
   },
   {
-    id: 'P04', name: 'King Street Renewal', site: '42 King Street, Bristol', scope: 'Heritage refurbishment',
+    id: 'P04', name: 'King Street Renewal', category: 'Refurbishment', site: '42 King Street, Bristol', scope: 'Heritage refurbishment',
     value: '£5.3m', manager: 'Tom Whitaker', mobilisation: '2026-12-07', finish: '2027-09-24', reviewDate: '2026-11-27',
     overlaySetId: 'RS-PK-KS',
     assignments: [
@@ -230,7 +230,7 @@ export const PACKAGES: Package[] = [
     ],
   },
   {
-    id: 'P05', name: 'Northfield Housing', site: 'Northfield Gardens, Birmingham', scope: 'Residential, 146 homes',
+    id: 'P05', name: 'Northfield Housing', category: 'Residential', site: 'Northfield Gardens, Birmingham', scope: 'Residential, 146 homes',
     value: '£7.9m', manager: 'Priya Shah', mobilisation: '2027-01-11', finish: '2027-10-29', reviewDate: '2026-12-18',
     overlaySetId: 'RS-PK-NF',
     assignments: [
@@ -247,7 +247,7 @@ export const PACKAGES: Package[] = [
     ],
   },
   {
-    id: 'P06', name: 'Harbour Road Depot', site: 'Harbour Road, Portishead', scope: 'Logistics shell & core',
+    id: 'P06', name: 'Harbour Road Depot', category: 'Industrial', site: 'Harbour Road, Portishead', scope: 'Logistics shell & core',
     value: '£3.2m', manager: 'Dana Nolan', mobilisation: '2027-02-01', finish: '2027-08-27', reviewDate: '2027-01-15',
     assignments: [
       { supplierId: 'S21', scopeOfWorks: 'Portal frame' },
@@ -281,7 +281,7 @@ const TEMPLATES: Record<string, EvidenceTemplate> = {
   pl: { label: 'Public liability', title: 'Public liability insurance certificate', issuers: ['Aviva', 'Zurich', 'AXA Insurance', 'Allianz', 'QBE'], prefix: 'PL', years: 1, cover: 10_000_000 },
   el: { label: "Employer's liability", title: "Employer's liability insurance certificate", issuers: ['Aviva', 'Zurich', 'AXA Insurance', 'Allianz', 'QBE'], prefix: 'EL', years: 1, cover: 10_000_000 },
   ssip: { label: 'CHAS', title: 'CHAS Premium Plus accreditation', issuers: ['CHAS'], prefix: 'CHAS', years: 1 },
-  ir35: { label: 'IR35 status', title: 'Status determination statement', issuers: ['Supplier declaration'], prefix: 'SDS', years: null },
+  ir35: { label: 'IR35 status', title: 'Status determination statement', issuers: ['Subcontractor declaration'], prefix: 'SDS', years: null },
   iso9001: { label: 'ISO 9001', title: 'ISO 9001:2015 certificate', issuers: ['BSI', 'NQA', 'LRQA'], prefix: 'QMS', years: 3 },
   niceic: { label: 'NICEIC', title: 'NICEIC Approved Contractor certificate', issuers: ['NICEIC'], prefix: 'NIC', years: 1, scope: 'Commercial' },
   ecs: { label: 'ECS cards', title: 'ECS card register (operatives)', issuers: ['JIB'], prefix: 'ECS', years: 3 },
@@ -291,15 +291,15 @@ const TEMPLATES: Record<string, EvidenceTemplate> = {
   fgas: { label: 'F-Gas', title: 'F-Gas company certificate', issuers: ['REFCOM'], prefix: 'FG', years: 1 },
   mcs: { label: 'MCS', title: 'MCS installer certificate', issuers: ['MCS'], prefix: 'MCS', years: 1 },
   cpcs: { label: 'CPCS cards', title: 'Plant operator card register', issuers: ['CPCS'], prefix: 'CPCS', years: 5 },
-  twc: { label: 'Temporary works', title: 'Temporary works procedure', issuers: ['Supplier document'], prefix: 'TWP', years: 2 },
+  twc: { label: 'Temporary works', title: 'Temporary works procedure', issuers: ['Subcontractor document'], prefix: 'TWP', years: 2 },
   cisrs: { label: 'CISRS cards', title: 'CISRS scaffolder card register', issuers: ['CISRS'], prefix: 'CIS', years: 5 },
   nasc: { label: 'NASC', title: 'NASC membership certificate', issuers: ['NASC'], prefix: 'NASC', years: 1 },
   wah: { label: 'Working at height', title: 'Working at height training records', issuers: ['CITB'], prefix: 'WAH', years: 3 },
   nfrc: { label: 'NFRC', title: 'NFRC competent person certificate', issuers: ['NFRC'], prefix: 'NFRC', years: 1 },
   fpc: { label: 'FPC EXC2', title: 'Factory production control certificate (EXC2)', issuers: ['SCCS'], prefix: 'FPC', years: 3, scope: 'EXC2' },
   weld: { label: 'Welder qualifications', title: 'Welder qualification records (ISO 9606)', issuers: ['TWI'], prefix: 'WQ', years: 2 },
-  bsa: { label: 'BSA competence', title: 'Building Safety Act competence declaration', issuers: ['Supplier declaration'], prefix: 'BSA', years: null },
-  crp: { label: 'Carbon reduction plan', title: 'Carbon reduction plan (PPN 06/21)', issuers: ['Supplier document'], prefix: 'CRP', years: 1 },
+  bsa: { label: 'BSA competence', title: 'Building Safety Act competence declaration', issuers: ['Subcontractor declaration'], prefix: 'BSA', years: null },
+  crp: { label: 'Carbon reduction plan', title: 'Carbon reduction plan (PPN 06/21)', issuers: ['Subcontractor document'], prefix: 'CRP', years: 1 },
   dbs: { label: 'Enhanced DBS', title: 'Enhanced DBS register (site operatives)', issuers: ['Disclosure and Barring Service'], prefix: 'DBS', years: 3 },
   asb: { label: 'Asbestos awareness', title: 'UKATA asbestos awareness records', issuers: ['UKATA'], prefix: 'ASB', years: 1 },
   ccs: { label: 'CCS registration', title: 'Considerate Constructors registration', issuers: ['Considerate Constructors Scheme'], prefix: 'CCS', years: 1 },
@@ -348,8 +348,8 @@ const OVERRIDES: Record<string, Record<string, Override>> = {
   },
   S37: { ir35: 'missing', weld: { verification: 'pending', submitted: '2026-10-17', reviewReason: 'Qualification range unclear for site welding position' }, fpc: { expires: '2026-11-21' } },
   S38: {
-    mcs: { verification: 'pending', submitted: '2026-10-09', reviewReason: 'New supplier — first-time verification' },
-    niceic: { verification: 'pending', submitted: '2026-10-09', reviewReason: 'New supplier — first-time verification' },
+    mcs: { verification: 'pending', submitted: '2026-10-09', reviewReason: 'New subcontractor — first-time verification' },
+    niceic: { verification: 'pending', submitted: '2026-10-09', reviewReason: 'New subcontractor — first-time verification' },
     pl: { expires: '2026-10-31' },
   },
   S39: { ecs: { verification: 'pending', submitted: '2026-10-15', reviewReason: 'Two operatives listed without card numbers' }, iso9001: 'missing', ssip: { expires: '2026-12-10' } },
@@ -360,7 +360,7 @@ const OVERRIDES: Record<string, Record<string, Override>> = {
   },
   S41: {
     firecert: { verification: 'pending', submitted: '2026-10-21', reviewReason: 'Product schedule incomplete — two systems listed without certificates' },
-    fire3p: { verification: 'pending', submitted: '2026-10-21', reviewReason: 'New supplier — first-time verification' },
+    fire3p: { verification: 'pending', submitted: '2026-10-21', reviewReason: 'New subcontractor — first-time verification' },
     iso9001: 'missing',
   },
   S42: { twc: { verification: 'pending', submitted: '2026-10-20', reviewReason: 'Named coordinator has changed — confirm competence' }, el: { expires: '2026-12-20' }, pl: { expires: '2026-11-15' } },
@@ -386,11 +386,11 @@ function yearsBefore(iso: string, years: number): string {
   return new Date(Date.UTC(y - years, m - 1, d + 1)).toISOString().slice(0, 10);
 }
 
-function evidenceTypesFor(supplier: Supplier): string[] {
-  const set = REQUIREMENT_SETS.find((s) => s.id === TRADE_SET[supplier.trade])!;
+function evidenceTypesFor(subcontractor: Subcontractor): string[] {
+  const set = REQUIREMENT_SETS.find((s) => s.id === TRADE_SET[subcontractor.trade])!;
   const types = set.requirementIds.map((id) => REQUIREMENTS_BY_ID[id].evidenceType);
   for (const pkg of PACKAGES) {
-    if (!pkg.overlaySetId || !pkg.assignments.some((a) => a.supplierId === supplier.id)) continue;
+    if (!pkg.overlaySetId || !pkg.assignments.some((a) => a.supplierId === subcontractor.id)) continue;
     const overlay = REQUIREMENT_SETS.find((s) => s.id === pkg.overlaySetId)!;
     for (const id of overlay.requirementIds) types.push(REQUIREMENTS_BY_ID[id].evidenceType);
   }
@@ -400,12 +400,12 @@ function evidenceTypesFor(supplier: Supplier): string[] {
 function buildEvidence(): EvidenceRecord[] {
   const records: EvidenceRecord[] = [];
   let seq = 1001;
-  for (const supplier of SUPPLIERS) {
-    for (const type of evidenceTypesFor(supplier)) {
-      const override = OVERRIDES[supplier.id]?.[type];
+  for (const subcontractor of SUPPLIERS) {
+    for (const type of evidenceTypesFor(subcontractor)) {
+      const override = OVERRIDES[subcontractor.id]?.[type];
       if (override === 'missing') continue;
       const t = TEMPLATES[type];
-      const h = hash(supplier.id + type);
+      const h = hash(subcontractor.id + type);
       // Default expiry: Nov 2027 – Oct 2028, after every live package finishes.
       const expires = t.years === null ? null : isoFromOffset('2027-11-08', h % 340);
       const effectiveExpiry = override?.expires !== undefined ? override.expires : expires;
@@ -414,7 +414,7 @@ function buildEvidence(): EvidenceRecord[] {
       const submitted = override?.submitted ?? isoFromOffset(issued, 3 + (h % 9));
       const record: EvidenceRecord = {
         id: `EV-${seq++}`,
-        supplierId: supplier.id,
+        supplierId: subcontractor.id,
         type,
         label: t.label,
         title: t.title,
@@ -426,7 +426,7 @@ function buildEvidence(): EvidenceRecord[] {
         cover: t.cover,
         verification,
         submitted,
-        fileName: `${supplier.name.split(' ')[0].toLowerCase()}-${type}-${submitted.slice(0, 4)}.pdf`,
+        fileName: `${subcontractor.name.split(' ')[0].toLowerCase()}-${type}-${submitted.slice(0, 4)}.pdf`,
         ...(verification === 'verified'
           ? { reviewedBy: REVIEWERS[h % REVIEWERS.length], reviewedAt: isoFromOffset(submitted, 1 + (h % 4)) }
           : {}),
@@ -444,6 +444,6 @@ export const SEED_EVIDENCE: EvidenceRecord[] = buildEvidence();
 export const SEED_AUDIT_SPECS = [
   { id: 'SS-2026-101', supplierId: 'S03', packageId: 'P04', generatedAt: '2026-10-14T10:24', reviewer: 'Tom Whitaker', note: 'All requirements satisfied at mobilisation and through finish. Released for pre-start.' },
   { id: 'SS-2026-102', supplierId: 'S06', packageId: 'P02', generatedAt: '2026-10-19T15:02', reviewer: 'Priya Shah', note: 'Ready. Fire stopping scope confirmed against tenant specification.' },
-  { id: 'SS-2026-103', supplierId: 'S01', packageId: 'P01', generatedAt: '2026-10-22T09:41', reviewer: 'Dana Nolan', note: 'CHAS renewal requested from supplier; mobilisation not blocked.' },
+  { id: 'SS-2026-103', supplierId: 'S01', packageId: 'P01', generatedAt: '2026-10-22T09:41', reviewer: 'Dana Nolan', note: 'CHAS renewal requested from subcontractor; mobilisation not blocked.' },
   { id: 'SS-2026-104', supplierId: 'S04', packageId: 'P03', generatedAt: '2026-10-23T16:18', reviewer: 'Priya Shah', note: 'Not ready. Product certification and DBS register outstanding; escalated to package manager.' },
 ];

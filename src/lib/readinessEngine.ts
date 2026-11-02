@@ -16,13 +16,13 @@ import type {
   Requirement,
   RequirementResult,
   RequirementSet,
-  Supplier,
+  Subcontractor,
   Verdict,
 } from '../types';
 import { formatCover, formatDate, lowerFirst } from './formatters';
 
-export function setsFor(supplier: Supplier, pkg?: Package): RequirementSet[] {
-  const sets = [REQUIREMENT_SETS.find((s) => s.id === TRADE_SET[supplier.trade])!];
+export function setsFor(subcontractor: Subcontractor, pkg?: Package): RequirementSet[] {
+  const sets = [REQUIREMENT_SETS.find((s) => s.id === TRADE_SET[subcontractor.trade])!];
   if (pkg?.overlaySetId) sets.push(REQUIREMENT_SETS.find((s) => s.id === pkg.overlaySetId)!);
   return sets;
 }
@@ -45,7 +45,7 @@ function snapshot(e: EvidenceRecord): EvidenceSnapshot {
 function sourceLabel(e?: EvidenceRecord): string {
   if (!e) return 'No source on passport';
   if (e.verification === 'verified') return `${e.id} · ${e.reference} · verified by ${e.reviewedBy ?? 'reviewer'}`;
-  if (e.verification === 'pending') return `${e.id} · ${e.reference} · supplier-submitted, not yet verified`;
+  if (e.verification === 'pending') return `${e.id} · ${e.reference} · subcontractor-submitted, not yet verified`;
   return `${e.id} · ${e.reference} · correction requested`;
 }
 
@@ -72,8 +72,8 @@ export function evaluateRequirement(
       outcome: failOutcome,
       reasonCode: 'missing',
       explanation: req.critical
-        ? 'No evidence on the supplier passport. Critical requirement — the supplier cannot mobilise without it.'
-        : 'No evidence on the supplier passport. Non-critical — obtain it or record a justified exception.',
+        ? 'No evidence on the subcontractor passport. Critical requirement — the subcontractor cannot mobilise without it.'
+        : 'No evidence on the subcontractor passport. Non-critical — obtain it or record a justified exception.',
     };
   }
 
@@ -167,7 +167,7 @@ function actionText(r: RequirementResult, pkg: Package, window: { finish: string
       return {
         issue: `${r.shortName} missing for ${pkg.name}`,
         recommendation: r.critical
-          ? `Request ${lowerFirst(r.shortName)} from the supplier and verify it before the evidence deadline.`
+          ? `Request ${lowerFirst(r.shortName)} from the subcontractor and verify it before the evidence deadline.`
           : `Request ${lowerFirst(r.shortName)} or record a justified exception.`,
       };
     case 'expired':
@@ -186,20 +186,20 @@ function actionText(r: RequirementResult, pkg: Package, window: { finish: string
         recommendation: `Request evidence covering the required scope, or reassign this scope of works.`,
       };
     case 'cover_short':
-      return { issue: `${label} cover below minimum`, recommendation: 'Request an increased limit of indemnity from the supplier.' };
+      return { issue: `${label} cover below minimum`, recommendation: 'Request an increased limit of indemnity from the subcontractor.' };
     case 'manual':
       return { issue: `${r.shortName} requires manual assessment`, recommendation: 'Complete the assessment in the Review Queue and record the decision.' };
     case 'pending':
       return { issue: `${label} awaiting verification`, recommendation: 'Verify the document against its metadata in the Review Queue.' };
     case 'correction':
-      return { issue: `${label} correction outstanding`, recommendation: 'Chase the supplier for a corrected document.' };
+      return { issue: `${label} correction outstanding`, recommendation: 'Chase the subcontractor for a corrected document.' };
     default:
       return { issue: r.shortName, recommendation: '' };
   }
 }
 
 export interface AssessmentInput {
-  supplier: Supplier;
+  subcontractor: Subcontractor;
   pkg: Package;
   mobilisation: string;
   finish: string;
@@ -207,9 +207,9 @@ export interface AssessmentInput {
   ranAt: string;
 }
 
-export function runAssessment({ supplier, pkg, mobilisation, finish, evidence, ranAt }: AssessmentInput): Assessment {
-  const sets = setsFor(supplier, pkg);
-  const own = evidence.filter((e) => e.supplierId === supplier.id);
+export function runAssessment({ subcontractor, pkg, mobilisation, finish, evidence, ranAt }: AssessmentInput): Assessment {
+  const sets = setsFor(subcontractor, pkg);
+  const own = evidence.filter((e) => e.supplierId === subcontractor.id);
   const window = { mobilisation, finish };
   const rows: RequirementResult[] = [];
   for (const set of sets) {
@@ -222,15 +222,15 @@ export function runAssessment({ supplier, pkg, mobilisation, finish, evidence, r
     }
   }
 
-  const assignment = pkg.assignments.find((a) => a.supplierId === supplier.id);
+  const assignment = pkg.assignments.find((a) => a.supplierId === subcontractor.id);
   let due = assignment?.evidenceDue ?? pkg.reviewDate;
   if (mobilisation < due) due = mobilisation;
 
   const actions: CorrectiveAction[] = rows
     .filter((r) => r.outcome !== 'satisfied')
     .map((r) => ({
-      id: `${supplier.id}-${pkg.id}-${r.requirementId}`,
-      supplierId: supplier.id,
+      id: `${subcontractor.id}-${pkg.id}-${r.requirementId}`,
+      supplierId: subcontractor.id,
       packageId: pkg.id,
       requirementId: r.requirementId,
       priority: priorityFor(r),
@@ -249,8 +249,8 @@ export function runAssessment({ supplier, pkg, mobilisation, finish, evidence, r
   const verdict: Verdict = counts.notSatisfied > 0 ? 'not_ready' : counts.action > 0 ? 'action' : 'ready';
 
   return {
-    id: `${supplier.id}-${pkg.id}-${mobilisation}-${finish}`,
-    supplierId: supplier.id,
+    id: `${subcontractor.id}-${pkg.id}-${mobilisation}-${finish}`,
+    supplierId: subcontractor.id,
     packageId: pkg.id,
     mobilisation,
     finish,
@@ -267,10 +267,10 @@ export function rank(p: Priority): number {
   return p === 'critical' ? 0 : p === 'high' ? 1 : 2;
 }
 
-/** Passport view: the supplier's trade set evaluated for today only (no package window). */
-export function evaluatePassport(supplier: Supplier, evidence: EvidenceRecord[], today: string) {
-  const set = setsFor(supplier)[0];
-  const own = evidence.filter((e) => e.supplierId === supplier.id);
+/** Passport view: the subcontractor's trade set evaluated for today only (no package window). */
+export function evaluatePassport(subcontractor: Subcontractor, evidence: EvidenceRecord[], today: string) {
+  const set = setsFor(subcontractor)[0];
+  const own = evidence.filter((e) => e.supplierId === subcontractor.id);
   const rows = set.requirementIds.map((reqId) => {
     const req = REQUIREMENTS_BY_ID[reqId];
     const ev = own.filter((e) => e.type === req.evidenceType).sort((a, b) => b.submitted.localeCompare(a.submitted))[0];

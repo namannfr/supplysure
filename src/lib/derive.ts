@@ -1,5 +1,5 @@
 import { PACKAGES } from '../data/demoData';
-import type { Assessment, CorrectiveAction, EvidenceRecord, Package, Priority, Risk, Supplier, Verdict } from '../types';
+import type { Assessment, CorrectiveAction, EvidenceRecord, Package, Priority, Risk, Subcontractor, Verdict } from '../types';
 import { DEMO_TODAY, addDays, daysBetween, pct } from './formatters';
 import { evaluatePassport, rank, runAssessment } from './readinessEngine';
 
@@ -12,12 +12,12 @@ export interface PackageStats {
   readiness: number;
   openActions: number;
   risk: Risk;
-  status: 'At risk' | 'Actions open' | 'Ready to mobilise';
+  status: 'Not ready' | 'Actions required' | 'Ready';
   assessments: Assessment[];
 }
 
 export interface SupplierStats {
-  supplier: Supplier;
+  subcontractor: Subcontractor;
   health: number;
   satisfied: number;
   total: number;
@@ -32,7 +32,7 @@ export interface SupplierStats {
 
 export interface AttentionItem {
   id: string;
-  kind: 'supplier' | 'package';
+  kind: 'subcontractor' | 'package';
   title: string;
   issue: string;
   due: string;
@@ -45,18 +45,18 @@ export function assignmentKey(packageId: string, supplierId: string) {
   return `${packageId}:${supplierId}`;
 }
 
-export function deriveAll(suppliers: Supplier[], evidence: EvidenceRecord[], today = DEMO_TODAY) {
-  const supplierMap = new Map(suppliers.map((s) => [s.id, s]));
+export function deriveAll(subcontractors: Subcontractor[], evidence: EvidenceRecord[], today = DEMO_TODAY) {
+  const supplierMap = new Map(subcontractors.map((s) => [s.id, s]));
   const ranAt = `${today}T00:00`;
 
   const assessments = new Map<string, Assessment>();
   for (const pkg of PACKAGES) {
     for (const a of pkg.assignments) {
-      const supplier = supplierMap.get(a.supplierId);
-      if (!supplier) continue;
+      const subcontractor = supplierMap.get(a.supplierId);
+      if (!subcontractor) continue;
       assessments.set(
-        assignmentKey(pkg.id, supplier.id),
-        runAssessment({ supplier, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, evidence, ranAt }),
+        assignmentKey(pkg.id, subcontractor.id),
+        runAssessment({ subcontractor, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, evidence, ranAt }),
       );
     }
   }
@@ -79,21 +79,21 @@ export function deriveAll(suppliers: Supplier[], evidence: EvidenceRecord[], tod
       readiness: pct(ready, list.length),
       openActions: list.reduce((n, x) => n + x.actions.length, 0),
       risk,
-      status: notReady > 0 ? 'At risk' : action > 0 ? 'Actions open' : 'Ready to mobilise',
+      status: notReady > 0 ? 'Not ready' : action > 0 ? 'Actions required' : 'Ready',
       assessments: list,
     };
   });
 
-  const activeSuppliers = suppliers.filter((s) => s.status === 'active');
+  const activeSuppliers = subcontractors.filter((s) => s.status === 'active');
   const in30 = addDays(today, 30);
   const in60 = addDays(today, 60);
 
-  const supplierStats: SupplierStats[] = suppliers.map((supplier) => {
-    const passport = evaluatePassport(supplier, evidence, today);
-    const own = evidence.filter((e) => e.supplierId === supplier.id);
-    const live = PACKAGES.filter((p) => p.assignments.some((a) => a.supplierId === supplier.id));
+  const supplierStats: SupplierStats[] = subcontractors.map((subcontractor) => {
+    const passport = evaluatePassport(subcontractor, evidence, today);
+    const own = evidence.filter((e) => e.supplierId === subcontractor.id);
+    const live = PACKAGES.filter((p) => p.assignments.some((a) => a.supplierId === subcontractor.id));
     const own_assessments = live
-      .map((p) => assessments.get(assignmentKey(p.id, supplier.id)))
+      .map((p) => assessments.get(assignmentKey(p.id, subcontractor.id)))
       .filter((x): x is Assessment => !!x);
     const upcoming = own
       .filter((e) => e.expires && e.expires >= today)
@@ -104,7 +104,7 @@ export function deriveAll(suppliers: Supplier[], evidence: EvidenceRecord[], tod
     let risk: Risk = 'low';
     let riskReason = 'All evidence current and verified';
     const notReadyOn = own_assessments.filter((a) => a.verdict === 'not_ready');
-    if (supplier.status === 'invited') {
+    if (subcontractor.status === 'invited') {
       risk = 'medium';
       riskReason = 'Invitation sent — passport not yet started';
     } else if (notReadyOn.length > 0 || passport.criticalFailure) {
@@ -129,11 +129,11 @@ export function deriveAll(suppliers: Supplier[], evidence: EvidenceRecord[], tod
     }
 
     return {
-      supplier,
+      subcontractor,
       health: pct(passport.satisfied, passport.total),
       satisfied: passport.satisfied,
       total: passport.total,
-      passportComplete: supplier.status === 'active' && passport.complete,
+      passportComplete: subcontractor.status === 'active' && passport.complete,
       risk,
       riskReason,
       livePackages: live,
@@ -161,7 +161,7 @@ export function deriveAll(suppliers: Supplier[], evidence: EvidenceRecord[], tod
     expiring30: expiringIn(in30).length,
     expiring60: expiringIn(in60).length,
     outstandingChecks: reviewQueue.length,
-    highRisk: supplierStats.filter((s) => s.supplier.status === 'active' && s.risk === 'high').length,
+    highRisk: supplierStats.filter((s) => s.subcontractor.status === 'active' && s.risk === 'high').length,
     openActions: allActions.length,
     activeSuppliers: activeSuppliers.length,
     passportsComplete: supplierStats.filter((s) => s.passportComplete).length,
@@ -174,7 +174,7 @@ export function deriveAll(suppliers: Supplier[], evidence: EvidenceRecord[], tod
     const top = a.actions[0];
     attention.push({
       id: `att-${a.supplierId}-${a.packageId}`,
-      kind: 'supplier',
+      kind: 'subcontractor',
       title: supplierMap.get(a.supplierId)!.name,
       issue: top.issue,
       due: top.due,
@@ -189,7 +189,7 @@ export function deriveAll(suppliers: Supplier[], evidence: EvidenceRecord[], tod
         id: `att-pkg-${ps.pkg.id}`,
         kind: 'package',
         title: ps.pkg.name,
-        issue: `${numberWord(ps.notReady)} suppliers remain not ready`,
+        issue: `${numberWord(ps.notReady)} subcontractors remain not ready`,
         due: ps.pkg.reviewDate,
         severity: 'critical',
         packageId: ps.pkg.id,

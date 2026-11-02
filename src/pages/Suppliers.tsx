@@ -16,7 +16,7 @@ import type { Risk, TradeId } from '../types';
 
 const PAGE_SIZE = 15;
 
-export function Suppliers({ route }: { route: Route }) {
+export function Subcontractors({ route }: { route: Route }) {
   const { derived } = useStore();
   const toast = useToast();
   const [q, setQ] = useState('');
@@ -26,14 +26,14 @@ export function Suppliers({ route }: { route: Route }) {
 
   const risk = (route.params.get('risk') as Risk | null) ?? 'all';
   const expiringOnly = route.params.get('view') === 'expiring';
-  const selected = route.params.get('supplier');
+  const selected = route.params.get('subcontractor');
   const highlight = route.params.get('evidence');
 
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
     return derived.supplierStats.filter((s) => {
-      if (term && !`${s.supplier.name} ${s.supplier.location} ${TRADE_LABELS[s.supplier.trade]}`.toLowerCase().includes(term)) return false;
-      if (trade !== 'all' && s.supplier.trade !== trade) return false;
+      if (term && !`${s.subcontractor.name} ${s.subcontractor.location} ${TRADE_LABELS[s.subcontractor.trade]}`.toLowerCase().includes(term)) return false;
+      if (trade !== 'all' && s.subcontractor.trade !== trade) return false;
       if (risk !== 'all' && s.risk !== risk) return false;
       if (expiringOnly && !(s.nextExpiry && s.nextExpiry.expires! <= derived.in30)) return false;
       return true;
@@ -57,28 +57,28 @@ export function Suppliers({ route }: { route: Route }) {
     <>
       <PageHeader
         eyebrow="Evidence passports"
-        title="Suppliers"
+        title="Subcontractors"
         description="Evidence is held once and reused only where its scope and dates satisfy the package."
-        actions={<Button variant="primary" icon={UserPlus} onClick={() => setInviteOpen(true)}>Invite supplier</Button>}
+        actions={<Button variant="primary" icon={UserPlus} onClick={() => setInviteOpen(true)}>Invite subcontractor</Button>}
       />
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard icon={Users} accent="navy" value={kpis.activeSuppliers} label="Active suppliers" context="With an evidence passport" />
+        <MetricCard icon={Users} accent="navy" value={kpis.activeSuppliers} label="Active subcontractors" context="With an evidence passport" />
         <MetricCard icon={IdCard} accent="brand" value={kpis.passportsComplete} label="Evidence passports complete" context="All trade evidence on file and in date" />
         <MetricCard icon={CalendarClock} accent="warn" value={kpis.expiring30} label="Documents expiring soon" context="Within the next 30 days" onClick={() => { setParam(route, 'view', expiringOnly ? null : 'expiring'); setPage(0); }} />
-        <MetricCard icon={AlertTriangle} accent="bad" value={kpis.highRisk} label="High-risk suppliers" context="Not ready for a live package" onClick={() => { setParam(route, 'risk', risk === 'high' ? null : 'high'); setPage(0); }} />
+        <MetricCard icon={AlertTriangle} accent="bad" value={kpis.highRisk} label="High-risk subcontractors" context="Not ready for a live package" onClick={() => { setParam(route, 'risk', risk === 'high' ? null : 'high'); setPage(0); }} />
       </div>
 
       <Card>
         <div className="flex flex-col gap-3 border-b border-line-soft px-5 py-4 lg:flex-row lg:items-center">
           <div className="mr-auto">
-            <h2 className="text-[15px] font-semibold">Supplier register</h2>
+            <h2 className="text-[15px] font-semibold">Subcontractor register</h2>
             <p className="text-[13px] text-muted">
-              {filtered ? `${rows.length} of ${derived.supplierStats.length} suppliers` : `${derived.supplierStats.length} suppliers`}
+              {filtered ? `${rows.length} of ${derived.supplierStats.length} subcontractors` : `${derived.supplierStats.length} subcontractors`}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <SearchInput value={q} onChange={(v) => { setQ(v); setPage(0); }} placeholder="Search suppliers" className="w-full sm:w-60" />
+            <SearchInput value={q} onChange={(v) => { setQ(v); setPage(0); }} placeholder="Search subcontractors" className="w-full sm:w-60" />
             <Select value={trade} onChange={(e) => { setTrade(e.target.value as TradeId | 'all'); setPage(0); }} aria-label="Filter by trade" className="w-[calc(50%-4px)] sm:w-44">
               <option value="all">All trades</option>
               {Object.entries(TRADE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -93,19 +93,19 @@ export function Suppliers({ route }: { route: Route }) {
         </div>
         {expiringOnly && (
           <div className="flex items-center justify-between border-b border-line-soft bg-warn-bg/50 px-5 py-2 text-[13px]">
-            <span className="text-[#7A5214]">Showing suppliers with a document expiring by {formatDate(derived.in30)}</span>
+            <span className="text-[#7A5214]">Showing subcontractors with a document expiring by {formatDate(derived.in30)}</span>
             <button type="button" onClick={() => setParam(route, 'view', null)} className="text-xs font-medium text-brand">Clear</button>
           </div>
         )}
 
         {rows.length === 0 ? (
-          <EmptyState icon={SearchX} title="No suppliers match these filters" description="Try a different search term or clear the filters." action={<Button size="sm" onClick={resetFilters}>Clear filters</Button>} />
+          <EmptyState icon={SearchX} title="No subcontractors match these filters" description="Try a different search term or clear the filters." action={<Button size="sm" onClick={resetFilters}>Clear filters</Button>} />
         ) : (
           <TableWrap>
             <table className="w-full min-w-[920px]">
               <thead className="border-b border-line-soft">
                 <tr>
-                  <th className="th pl-5">Supplier</th>
+                  <th className="th pl-5">Subcontractor</th>
                   <th className="th">Trade</th>
                   <th className="th w-[190px]">Evidence health</th>
                   <th className="th text-right">Live packages</th>
@@ -118,17 +118,17 @@ export function Suppliers({ route }: { route: Route }) {
                 {visible.map((s) => {
                   const exp = s.nextExpiry?.expires;
                   const days = exp ? daysBetween(DEMO_TODAY, exp) : null;
-                  const invited = s.supplier.status === 'invited';
+                  const invited = s.subcontractor.status === 'invited';
                   return (
-                    <tr key={s.supplier.id} className={`row-link ${selected === s.supplier.id ? 'bg-brand-50/60' : ''}`} onClick={() => setParam(route, 'supplier', s.supplier.id)}>
+                    <tr key={s.subcontractor.id} className={`row-link ${selected === s.subcontractor.id ? 'bg-brand-50/60' : ''}`} onClick={() => setParam(route, 'subcontractor', s.subcontractor.id)}>
                       <td className="td pl-5">
                         <div className="flex items-center gap-2 text-[13px] font-medium text-ink">
-                          {s.supplier.name}
+                          {s.subcontractor.name}
                           {invited && <Badge tone="info">Invited</Badge>}
                         </div>
-                        <div className="text-xs text-muted">{s.supplier.location}</div>
+                        <div className="text-xs text-muted">{s.subcontractor.location}</div>
                       </td>
-                      <td className="td text-[13px] text-ink">{TRADE_LABELS[s.supplier.trade]}</td>
+                      <td className="td text-[13px] text-ink">{TRADE_LABELS[s.subcontractor.trade]}</td>
                       <td className="td">
                         <div className="flex items-center gap-3">
                           <ProgressBar value={s.health} className="w-24" />
@@ -148,7 +148,7 @@ export function Suppliers({ route }: { route: Route }) {
                       </td>
                       <td className="td">{invited ? <Badge tone="neutral">Pending</Badge> : <RiskBadge risk={s.risk} />}</td>
                       <td className="td pr-5 text-right">
-                        <Button size="sm" onClick={(e) => { e.stopPropagation(); setParam(route, 'supplier', s.supplier.id); }}>
+                        <Button size="sm" onClick={(e) => { e.stopPropagation(); setParam(route, 'subcontractor', s.subcontractor.id); }}>
                           {invited ? 'View invite' : 'View passport'}
                         </Button>
                       </td>
@@ -170,7 +170,7 @@ export function Suppliers({ route }: { route: Route }) {
         )}
       </Card>
 
-      <SupplierDetails supplierId={selected} highlightEvidence={highlight} onClose={() => setParams(route, { supplier: null, evidence: null })} />
+      <SupplierDetails supplierId={selected} highlightEvidence={highlight} onClose={() => setParams(route, { subcontractor: null, evidence: null })} />
 
       <InviteSupplierModal
         open={inviteOpen}

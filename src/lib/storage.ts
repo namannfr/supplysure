@@ -1,4 +1,4 @@
-const KEY = 'supplysure-demo-state-v1';
+const KEY = 'reviqa-demo-state-v1';
 
 export function loadState<T>(): T | null {
   try {

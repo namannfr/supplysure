@@ -2,15 +2,15 @@ import { useState, type FormEvent } from 'react';
 import { Info } from 'lucide-react';
 import { TRADE_LABELS } from '../../lib/formatters';
 import { useStore } from '../../lib/store';
-import type { Supplier, TradeId } from '../../types';
+import type { Subcontractor, TradeId } from '../../types';
 import { Button } from '../ui/Button';
 import { Field, Input, Select } from '../ui/Form';
 import { Modal } from '../ui/Overlay';
 
 const EMPTY = { company: '', contact: '', email: '', trade: '' as TradeId | '' };
 
-export function InviteSupplierModal({ open, onClose, onInvited }: { open: boolean; onClose: () => void; onInvited: (s: Supplier) => void }) {
-  const { suppliers, inviteSupplier } = useStore();
+export function InviteSupplierModal({ open, onClose, onInvited }: { open: boolean; onClose: () => void; onInvited: (s: Subcontractor) => void }) {
+  const { subcontractors, inviteSupplier } = useStore();
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY, string>>>({});
 
@@ -24,10 +24,10 @@ export function InviteSupplierModal({ open, onClose, onInvited }: { open: boolea
     e.preventDefault();
     const next: typeof errors = {};
     if (!form.company.trim()) next.company = 'Enter the company name.';
-    else if (suppliers.some((s) => s.name.toLowerCase() === form.company.trim().toLowerCase())) next.company = 'This supplier is already in the register.';
+    else if (subcontractors.some((s) => s.name.toLowerCase() === form.company.trim().toLowerCase())) next.company = 'This subcontractor is already in the register.';
     if (!form.contact.trim()) next.contact = 'Enter a contact name.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) next.email = 'Enter a valid email address.';
-    if (!form.trade) next.trade = 'Select the supplier trade.';
+    if (!form.trade) next.trade = 'Select the subcontractor trade.';
     setErrors(next);
     if (Object.keys(next).length) return;
     const created = inviteSupplier({ company: form.company, contact: form.contact, email: form.email, trade: form.trade as TradeId });
@@ -41,8 +41,8 @@ export function InviteSupplierModal({ open, onClose, onInvited }: { open: boolea
     <Modal
       open={open}
       onClose={close}
-      title="Invite supplier"
-      subtitle="The supplier builds one evidence passport that is reused across your packages."
+      title="Invite subcontractor"
+      subtitle="The subcontractor builds one evidence passport that is reused across your packages."
       footer={
         <>
           <Button onClick={close}>Cancel</Button>
@@ -72,7 +72,7 @@ export function InviteSupplierModal({ open, onClose, onInvited }: { open: boolea
         </Field>
         <div className="flex gap-2.5 rounded-md border border-info/20 bg-info-bg px-3 py-2.5 text-xs text-[#36618A]">
           <Info className="mt-px h-3.5 w-3.5 shrink-0" />
-          Demonstration flow — the supplier is added to this browser's register only. No email is sent.
+          Demonstration flow — the subcontractor is added to this browser's register only. No email is sent.
         </div>
       </form>
     </Modal>

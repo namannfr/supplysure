@@ -29,7 +29,7 @@ export function PriorityPackages({ stats, limit = 5 }: { stats: PackageStats[]; 
             <tr>
               <th className="th pl-5">Package</th>
               <th className="th">Mobilisation</th>
-              <th className="th text-right">Suppliers</th>
+              <th className="th text-right">Subcontractors</th>
               <th className="th w-[180px]">Ready</th>
               <th className="th text-right">Open actions</th>
               <th className="th">Risk</th>

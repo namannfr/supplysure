@@ -1,13 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CURRENT_USER, PACKAGES, SEED_AUDIT_SPECS, SEED_EVIDENCE, SUPPLIERS } from '../data/demoData';
-import type { Assessment, AuditRecord, EvidenceRecord, ReviewDecision, Supplier, TradeId } from '../types';
+import type { Assessment, AuditRecord, EvidenceRecord, ReviewDecision, Subcontractor, TradeId } from '../types';
 import { deriveAll, type Derived } from './derive';
 import { DEMO_TODAY, nowStamp } from './formatters';
 import { runAssessment } from './readinessEngine';
 import { clearState, loadState, saveState } from './storage';
 
 interface DemoState {
-  suppliers: Supplier[];
+  subcontractors: Subcontractor[];
   evidence: EvidenceRecord[];
   audits: AuditRecord[];
   decisions: ReviewDecision[];
@@ -17,7 +17,7 @@ interface DemoState {
 
 function seedAudits(): AuditRecord[] {
   return SEED_AUDIT_SPECS.map((spec) => {
-    const supplier = SUPPLIERS.find((s) => s.id === spec.supplierId)!;
+    const subcontractor = SUPPLIERS.find((s) => s.id === spec.supplierId)!;
     const pkg = PACKAGES.find((p) => p.id === spec.packageId)!;
     return {
       id: spec.id,
@@ -26,7 +26,7 @@ function seedAudits(): AuditRecord[] {
       note: spec.note,
       origin: 'seed' as const,
       assessment: runAssessment({
-        supplier, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, evidence: SEED_EVIDENCE, ranAt: spec.generatedAt,
+        subcontractor, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, evidence: SEED_EVIDENCE, ranAt: spec.generatedAt,
       }),
     };
   }).reverse();
@@ -34,7 +34,7 @@ function seedAudits(): AuditRecord[] {
 
 function seedState(): DemoState {
   return {
-    suppliers: SUPPLIERS,
+    subcontractors: SUPPLIERS,
     evidence: SEED_EVIDENCE,
     audits: seedAudits(),
     decisions: [],
@@ -45,7 +45,7 @@ function seedState(): DemoState {
 
 interface Store extends DemoState {
   derived: Derived;
-  inviteSupplier: (input: { company: string; contact: string; email: string; trade: TradeId }) => Supplier;
+  inviteSupplier: (input: { company: string; contact: string; email: string; trade: TradeId }) => Subcontractor;
   decideReview: (evidenceId: string, decision: ReviewDecision['decision'], note: string) => void;
   recordAssessment: (a: Assessment) => void;
   createAuditPack: (a: Assessment, note?: string) => AuditRecord;
@@ -63,11 +63,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => saveState(state), [state]);
 
-  const derived = useMemo(() => deriveAll(state.suppliers, state.evidence), [state.suppliers, state.evidence]);
+  const derived = useMemo(() => deriveAll(state.subcontractors, state.evidence), [state.subcontractors, state.evidence]);
 
   const inviteSupplier: Store['inviteSupplier'] = useCallback((input) => {
-    const next = Math.max(...stateRef.current.suppliers.map((x) => Number(x.id.slice(1)))) + 1;
-    const created: Supplier = {
+    const next = Math.max(...stateRef.current.subcontractors.map((x) => Number(x.id.slice(1)))) + 1;
+    const created: Subcontractor = {
         id: `S${String(next).padStart(2, '0')}`,
         name: input.company.trim(),
         trade: input.trade,
@@ -77,7 +77,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
         status: 'invited',
         joined: DEMO_TODAY,
     };
-    setState((s) => ({ ...s, suppliers: [created, ...s.suppliers] }));
+    setState((s) => ({ ...s, subcontractors: [created, ...s.subcontractors] }));
     return created;
   }, []);
 
@@ -145,6 +145,6 @@ export function useStore(): Store {
 }
 
 export function useSupplier(id: string | null | undefined) {
-  const { suppliers } = useStore();
-  return suppliers.find((s) => s.id === id);
+  const { subcontractors } = useStore();
+  return subcontractors.find((s) => s.id === id);
 }

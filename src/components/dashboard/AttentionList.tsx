@@ -17,8 +17,8 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
   const shown = expanded ? items : items.slice(0, 4);
 
   const open = (item: AttentionItem) =>
-    item.kind === 'supplier'
-      ? navigate(`/readiness?supplier=${item.supplierId}&package=${item.packageId}&run=1`)
+    item.kind === 'subcontractor'
+      ? navigate(`/readiness?subcontractor=${item.supplierId}&package=${item.packageId}&run=1`)
       : navigate(`/packages/${item.packageId}`);
 
   return (
@@ -41,7 +41,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
                   <span className="mt-0.5 block text-[13px] text-muted">{item.issue}</span>
                   <span className="mt-1.5 flex items-center gap-2 text-xs">
                     <span className={`font-medium ${sev.text}`}>{item.kind === 'package' ? 'Package' : PRIORITY_LABELS[item.severity]}</span>
-                    {item.kind === 'supplier' && <span className="text-subtle">· {pkgName}</span>}
+                    {item.kind === 'subcontractor' && <span className="text-subtle">· {pkgName}</span>}
                   </span>
                 </span>
                 <span className="flex shrink-0 flex-col items-end justify-between">

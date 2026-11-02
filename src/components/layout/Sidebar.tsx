@@ -42,7 +42,7 @@ export function Sidebar({ current, onNavigate, onHowItWorks }: { current: string
       items: [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/packages', label: 'Packages', icon: FolderKanban },
-        { to: '/suppliers', label: 'Suppliers', icon: Users },
+        { to: '/subcontractors', label: 'Subcontractors', icon: Users },
         { to: '/readiness', label: 'Readiness Check', icon: ClipboardCheck },
       ],
     },
@@ -66,7 +66,7 @@ export function Sidebar({ current, onNavigate, onHowItWorks }: { current: string
       <div className="flex items-center gap-2.5 px-5 pb-4 pt-5">
         <Logo />
         <div className="leading-tight">
-          <div className="text-[15px] font-semibold tracking-tight">SupplySure</div>
+          <div className="text-[15px] font-semibold tracking-tight">Reviqa</div>
           <div className="text-xs text-navy-muted">Package readiness</div>
         </div>
       </div>
@@ -140,7 +140,7 @@ export function Sidebar({ current, onNavigate, onHowItWorks }: { current: string
           className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13px] text-[#C9D5E1] transition-colors hover:bg-white/[0.06] hover:text-white"
         >
           <HelpCircle className="h-4 w-4 text-navy-muted" strokeWidth={1.9} />
-          How SupplySure works
+          How Reviqa works
         </button>
         <div className="rounded-md border border-navy-line bg-navy/50 p-3">
           <div className="flex items-center gap-2 text-xs font-medium text-white">
@@ -148,7 +148,7 @@ export function Sidebar({ current, onNavigate, onHowItWorks }: { current: string
             Demonstration data
           </div>
           <p className="mt-1.5 text-2xs leading-[1.5] text-navy-muted">
-            SupplySure supports buyer decisions. It does not certify or approve subcontractors. All records shown are fictional.
+            Reviqa supports buyer decisions. It does not certify or approve subcontractors. All records shown are fictional.
           </p>
         </div>
       </div>

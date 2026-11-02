@@ -9,7 +9,7 @@ import { PackageDetail, Packages } from './pages/Packages';
 import { ReadinessCheck } from './pages/ReadinessCheck';
 import { RequirementLibrary } from './pages/RequirementLibrary';
 import { ReviewQueue } from './pages/ReviewQueue';
-import { Suppliers } from './pages/Suppliers';
+import { Subcontractors } from './pages/Suppliers';
 
 function Routes() {
   const route = useRoute();
@@ -24,8 +24,8 @@ function Routes() {
     case 'packages':
       page = id ? <PackageDetail id={id} /> : <Packages route={route} />;
       break;
-    case 'suppliers':
-      page = <Suppliers route={route} />;
+    case 'subcontractors':
+      page = <Subcontractors route={route} />;
       break;
     case 'readiness':
       page = <ReadinessCheck route={route} />;

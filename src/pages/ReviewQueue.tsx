@@ -17,7 +17,7 @@ import type { EvidenceRecord } from '../types';
 type Tab = 'pending' | 'decided';
 
 export function ReviewQueue() {
-  const { evidence, suppliers, decisions, decideReview } = useStore();
+  const { evidence, subcontractors, decisions, decideReview } = useStore();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>('pending');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -33,23 +33,23 @@ export function ReviewQueue() {
     },
     [evidence],
   );
-  const supplierOf = (e: EvidenceRecord) => suppliers.find((s) => s.id === e.supplierId)!;
+  const supplierOf = (e: EvidenceRecord) => subcontractors.find((s) => s.id === e.supplierId)!;
   const open = evidence.find((e) => e.id === openId);
 
   // Show the reviewer what each decision would change on live packages before they commit.
   const impact = useMemo(() => {
     if (!open) return [];
-    const supplier = supplierOf(open);
-    return PACKAGES.filter((p) => p.assignments.some((a) => a.supplierId === supplier.id)).map((pkg) => {
+    const subcontractor = supplierOf(open);
+    return PACKAGES.filter((p) => p.assignments.some((a) => a.supplierId === subcontractor.id)).map((pkg) => {
       const run = (v: EvidenceRecord['verification']) =>
         runAssessment({
-          supplier, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, ranAt: DEMO_TODAY,
+          subcontractor, pkg, mobilisation: pkg.mobilisation, finish: pkg.finish, ranAt: DEMO_TODAY,
           evidence: evidence.map((e) => (e.id === open.id ? { ...e, verification: v } : e)),
         }).verdict;
       return { pkg, now: run(open.verification), approved: run('verified'), corrected: run('correction_requested') };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, evidence, suppliers]);
+  }, [open, evidence, subcontractors]);
 
   const decide = (decision: 'approved' | 'correction_requested') => {
     if (!open) return;
@@ -61,7 +61,7 @@ export function ReviewQueue() {
       title: decision === 'approved' ? `${open.label} approved for ${s.name}` : `Correction requested from ${s.name}`,
       description: changed.length
         ? changed.map((c) => `${c.pkg.name} is now ${VERDICT_LABELS[decision === 'approved' ? c.approved : c.corrected].toLowerCase()}`).join(' · ')
-        : 'Simulated decision recorded. No email sent to the supplier.',
+        : 'Simulated decision recorded. No email sent to the subcontractor.',
     });
     setOpenId(null);
     setNote('');
@@ -97,7 +97,7 @@ export function ReviewQueue() {
               <table className="w-full min-w-[900px]">
                 <thead className="border-b border-line-soft">
                   <tr>
-                    <th className="th pl-5">Supplier</th>
+                    <th className="th pl-5">Subcontractor</th>
                     <th className="th">Evidence</th>
                     <th className="th w-[32%]">Reason for review</th>
                     <th className="th">Submitted</th>
@@ -142,7 +142,7 @@ export function ReviewQueue() {
             <table className="w-full min-w-[760px]">
               <thead className="border-b border-line-soft">
                 <tr>
-                  <th className="th pl-5">Supplier</th>
+                  <th className="th pl-5">Subcontractor</th>
                   <th className="th">Evidence</th>
                   <th className="th">Decision</th>
                   <th className="th">Reviewer</th>
@@ -154,7 +154,7 @@ export function ReviewQueue() {
                   const e = evidence.find((x) => x.id === d.evidenceId);
                   if (!e) return null;
                   return (
-                    <tr key={d.evidenceId + d.at} className="row-link" onClick={() => navigate(`/suppliers?supplier=${e.supplierId}&evidence=${e.id}`)}>
+                    <tr key={d.evidenceId + d.at} className="row-link" onClick={() => navigate(`/subcontractors?subcontractor=${e.supplierId}&evidence=${e.id}`)}>
                       <td className="td pl-5 text-[13px] font-medium text-ink">{supplierOf(e).name}</td>
                       <td className="td">
                         <div className="text-[13px] text-ink">{e.title}</div>
@@ -183,7 +183,7 @@ export function ReviewQueue() {
         subtitle={open && `${supplierOf(open).name} · submitted ${formatDate(open.submitted)}`}
         footer={
           <>
-            <span className="mr-auto text-xs text-muted">Simulated review — no message is sent to the supplier.</span>
+            <span className="mr-auto text-xs text-muted">Simulated review — no message is sent to the subcontractor.</span>
             <Button variant="danger" icon={RotateCcw} onClick={() => decide('correction_requested')}>Request correction</Button>
             <Button variant="primary" icon={Check} onClick={() => decide('approved')}>Approve</Button>
           </>
@@ -218,7 +218,7 @@ export function ReviewQueue() {
             <div>
               <h3 className="mb-2 text-[13px] font-semibold">Effect on live packages</h3>
               {impact.length === 0 ? (
-                <p className="rounded-md bg-canvas px-3 py-2 text-[13px] text-muted">This supplier is not appointed to a live package. The decision updates its passport only.</p>
+                <p className="rounded-md bg-canvas px-3 py-2 text-[13px] text-muted">This subcontractor is not appointed to a live package. The decision updates its passport only.</p>
               ) : (
                 <ul className="divide-y divide-line-soft rounded-md border border-line">
                   {impact.map((i) => (
@@ -233,7 +233,7 @@ export function ReviewQueue() {
               )}
             </div>
             <Field label="Reviewer note" htmlFor="rv-note" hint="Recorded with the decision and included in later audit packs.">
-              <Textarea id="rv-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Certificate checked against issuer details provided by supplier." />
+              <Textarea id="rv-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Certificate checked against issuer details provided by subcontractor." />
             </Field>
           </div>
         )}

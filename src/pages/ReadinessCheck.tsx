@@ -19,7 +19,7 @@ function inputsFor(supplierId: string, packageId: string): CheckInputs {
 }
 
 export function ReadinessCheck({ route }: { route: Route }) {
-  const { suppliers, evidence, lastAssessment, recordAssessment, createAuditPack } = useStore();
+  const { subcontractors, evidence, lastAssessment, recordAssessment, createAuditPack } = useStore();
   const toast = useToast();
 
   const [inputs, setInputs] = useState<CheckInputs>(() =>
@@ -29,10 +29,10 @@ export function ReadinessCheck({ route }: { route: Route }) {
   );
   const [ranAt, setRanAt] = useState<string | null>(lastAssessment?.ranAt ?? null);
 
-  // Deep links from the dashboard, supplier drawer and package pages.
+  // Deep links from the dashboard, subcontractor drawer and package pages.
   const paramKey = route.params.toString();
   useEffect(() => {
-    const s = route.params.get('supplier');
+    const s = route.params.get('subcontractor');
     if (!s) return;
     const p = route.params.get('package') ?? PACKAGES.find((x) => x.assignments.some((a) => a.supplierId === s))?.id ?? 'P01';
     setInputs(inputsFor(s, p));
@@ -43,13 +43,13 @@ export function ReadinessCheck({ route }: { route: Route }) {
   }, [paramKey]);
 
   const dateError = inputs.finish <= inputs.mobilisation ? 'Package finish must be after mobilisation.' : undefined;
-  const supplier = suppliers.find((s) => s.id === inputs.supplierId);
+  const subcontractor = subcontractors.find((s) => s.id === inputs.supplierId);
   const pkg = PACKAGES.find((p) => p.id === inputs.packageId)!;
 
   const assessment = useMemo(() => {
-    if (!ranAt || dateError || !supplier) return null;
-    return runAssessment({ supplier, pkg, mobilisation: inputs.mobilisation, finish: inputs.finish, evidence, ranAt });
-  }, [ranAt, dateError, supplier, pkg, inputs.mobilisation, inputs.finish, evidence]);
+    if (!ranAt || dateError || !subcontractor) return null;
+    return runAssessment({ subcontractor, pkg, mobilisation: inputs.mobilisation, finish: inputs.finish, evidence, ranAt });
+  }, [ranAt, dateError, subcontractor, pkg, inputs.mobilisation, inputs.finish, evidence]);
 
   useEffect(() => {
     if (assessment) recordAssessment(assessment);
@@ -57,12 +57,12 @@ export function ReadinessCheck({ route }: { route: Route }) {
 
   const run = () => {
     setRanAt(nowStamp());
-    toast({ tone: 'success', title: 'Readiness check complete', description: `${supplier?.name} assessed against ${pkg.name}.` });
+    toast({ tone: 'success', title: 'Readiness check complete', description: `${subcontractor?.name} assessed against ${pkg.name}.` });
   };
 
   const exportRecord = () => {
     if (!assessment) return;
-    downloadAssessment(assessment, { generatedAt: nowStamp(), reviewer: CURRENT_USER.name }, suppliers);
+    downloadAssessment(assessment, { generatedAt: nowStamp(), reviewer: CURRENT_USER.name }, subcontractors);
     toast({ tone: 'success', title: 'Audit record downloaded', description: 'A printable HTML record of these inputs and results.' });
   };
 
@@ -78,14 +78,14 @@ export function ReadinessCheck({ route }: { route: Route }) {
       <PageHeader
         eyebrow="Deterministic readiness engine"
         title="Package readiness check"
-        description="Test a supplier against one requirement set and one date. Change the package or date to see the verdict recompute."
+        description="Test a subcontractor against one requirement set and one date. Change the package or date to see the verdict recompute."
       />
       <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
         <div>
-          <ReadinessForm suppliers={suppliers} inputs={inputs} onChange={(next) => setInputs((i) => ({ ...i, ...next }))} onRun={run} dateError={dateError} />
+          <ReadinessForm subcontractors={subcontractors} inputs={inputs} onChange={(next) => setInputs((i) => ({ ...i, ...next }))} onRun={run} dateError={dateError} />
         </div>
         <div className="min-w-0 space-y-6">
-          <ReadinessSummary assessment={assessment} supplier={supplier} onExport={exportRecord} onSavePack={savePack} />
+          <ReadinessSummary assessment={assessment} subcontractor={subcontractor} onExport={exportRecord} onSavePack={savePack} />
           <RequirementsTable assessment={assessment} />
           <CorrectiveActions assessment={assessment} onExport={exportRecord} />
         </div>
